@@ -3071,8 +3071,8 @@
                 "text": "Validasi Input"
               },
               "body": {
-                "stroke": "#333333",
-                "strokeWidth": 1.5,
+                "stroke": "red",
+                "strokeWidth": 2.5,
                 "strokeDasharray": null
               }
             },
@@ -3169,12 +3169,34 @@
               "outOfScope": false,
               "isTrustBoundary": false,
               "reasonOutOfScope": "",
-              "hasOpenThreats": false,
+              "hasOpenThreats": true,
               "handlesCardPayment": false,
               "handlesGoodsOrServices": false,
               "isWebApplication": false,
               "privilegeLevel": "",
-              "threats": []
+              "threats": [
+                {
+                  "id": "b8d3eedb-e750-4dd9-bfc9-1a83e291aa39",
+                  "title": "Enumerate User",
+                  "status": "Open",
+                  "severity": "TBD",
+                  "type": "Information disclosure",
+                  "description": "An attacker can enumerate user that is registered to the website by checking the return error like \"User is not registered\" or \"Wrong Password\"",
+                  "mitigation": "Use a general error message like \"Wrong Username/Password\" and use rate limit",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 24,
+                  "score": ""
+                }
+              ],
+              "threatFrequency": {
+                "spoofing": 0,
+                "tampering": 0,
+                "repudiation": 0,
+                "informationDisclosure": 1,
+                "denialOfService": 0,
+                "elevationOfPrivilege": 0
+              }
             }
           },
           {
@@ -3536,13 +3558,6 @@
               "storesCredentials": false,
               "storesInventory": false,
               "threats": []
-            },
-            "tools": {
-              "items": [
-                "boundary",
-                "button-remove"
-              ],
-              "name": null
             }
           },
           {
@@ -5587,6 +5602,6 @@
     ],
     "diagramTop": 5,
     "reviewer": "Fakhri, Rafi",
-    "threatTop": 23
+    "threatTop": 24
   }
 }
