@@ -4203,7 +4203,7 @@
           {
             "position": {
               "x": 390,
-              "y": 427
+              "y": 430
             },
             "size": {
               "width": 60,
@@ -4322,10 +4322,10 @@
                   "id": "59d5c983-22f2-4ace-9e71-c98d3d475f58",
                   "title": "Unauthorized Access",
                   "status": "Open",
-                  "severity": "High",
+                  "severity": "Critical",
                   "type": "Elevation of privilege",
                   "description": "Unauthorized user can find or access the item modification page",
-                  "mitigation": "Use a strong RBAC, make sure admin endpoint/API is unable to be accessed without authorization",
+                  "mitigation": "Use a strong RBAC, make sure admin endpoint/API is unable to be accessed without authorization or token",
                   "modelType": "STRIDE",
                   "new": false,
                   "number": 20,
@@ -4338,15 +4338,8 @@
                 "repudiation": 0,
                 "informationDisclosure": 0,
                 "denialOfService": 0,
-                "elevationOfPrivilege": 1
+                "elevationOfPrivilege": 2
               }
-            },
-            "tools": {
-              "items": [
-                "boundary",
-                "button-remove"
-              ],
-              "name": null
             }
           },
           {
@@ -5601,6 +5594,6 @@
     ],
     "diagramTop": 5,
     "reviewer": "Fakhri, Rafi",
-    "threatTop": 20
+    "threatTop": 23
   }
 }
