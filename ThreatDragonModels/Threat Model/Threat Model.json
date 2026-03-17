@@ -1717,9 +1717,45 @@
             ]
           }
         ]
+      },
+      {
+        "id": 1,
+        "title": "DFD Level 2 Process 1",
+        "diagramType": "STRIDE",
+        "placeholder": "New STRIDE diagram description",
+        "thumbnail": "./public/content/images/thumbnail.stride.jpg",
+        "version": "2.6.0",
+        "cells": []
+      },
+      {
+        "id": 2,
+        "title": "DFD Level 2 Process 2",
+        "diagramType": "STRIDE",
+        "placeholder": "New STRIDE diagram description",
+        "thumbnail": "./public/content/images/thumbnail.stride.jpg",
+        "version": "2.6.0",
+        "cells": []
+      },
+      {
+        "id": 3,
+        "title": "DFD Level 2 Process 3",
+        "diagramType": "STRIDE",
+        "placeholder": "New STRIDE diagram description",
+        "thumbnail": "./public/content/images/thumbnail.stride.jpg",
+        "version": "2.6.0",
+        "cells": []
+      },
+      {
+        "id": 4,
+        "title": "DFD Level 2 Process 4",
+        "diagramType": "STRIDE",
+        "placeholder": "New STRIDE diagram description",
+        "thumbnail": "./public/content/images/thumbnail.stride.jpg",
+        "version": "2.6.0",
+        "cells": []
       }
     ],
-    "diagramTop": 1,
+    "diagramTop": 5,
     "reviewer": "Fakhri, Rafi",
     "threatTop": 0
   }
