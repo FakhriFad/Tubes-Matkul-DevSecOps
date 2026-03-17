@@ -714,10 +714,10 @@
               "threats": [
                 {
                   "id": "27e6dfde-1357-4ef1-965e-fc05e816bc91",
-                  "title": "Malicious Change",
+                  "title": "Unauthorized Access",
                   "status": "Open",
                   "severity": "High",
-                  "type": "Repudiation",
+                  "type": "Tampering",
                   "description": "Someone can just modify/delete item data without any trace",
                   "mitigation": "Implement Audit Log to store data like IP and timestamp to a read only data base",
                   "modelType": "STRIDE",
@@ -728,7 +728,7 @@
               ],
               "threatFrequency": {
                 "spoofing": 0,
-                "tampering": 0,
+                "tampering": 1,
                 "repudiation": 1,
                 "informationDisclosure": 0,
                 "denialOfService": 0,
