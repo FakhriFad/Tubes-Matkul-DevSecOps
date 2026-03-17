@@ -1854,6 +1854,7 @@
             },
             "visible": true,
             "shape": "actor",
+            "zIndex": 1,
             "ports": {
               "groups": {
                 "top": {
@@ -1937,7 +1938,6 @@
               ]
             },
             "id": "330c4344-cea0-4e99-97c0-bf267beea00a",
-            "zIndex": 1,
             "data": {
               "type": "tm.Actor",
               "name": "New User",
@@ -1964,13 +1964,14 @@
                 "text": "Input and \nCheck \nAvailability"
               },
               "body": {
-                "stroke": "#333333",
-                "strokeWidth": 1.5,
+                "stroke": "red",
+                "strokeWidth": 2.5,
                 "strokeDasharray": null
               }
             },
             "visible": true,
             "shape": "process",
+            "zIndex": 2,
             "ports": {
               "groups": {
                 "top": {
@@ -2054,7 +2055,6 @@
               ]
             },
             "id": "5ab43b08-d3a8-427f-9009-0fcab52d8813",
-            "zIndex": 2,
             "data": {
               "type": "tm.Process",
               "name": "Input and \nCheck \nAvailability",
@@ -2062,12 +2062,34 @@
               "outOfScope": false,
               "isTrustBoundary": false,
               "reasonOutOfScope": "",
-              "hasOpenThreats": false,
+              "hasOpenThreats": true,
               "handlesCardPayment": false,
               "handlesGoodsOrServices": false,
               "isWebApplication": false,
               "privilegeLevel": "",
-              "threats": []
+              "threats": [
+                {
+                  "id": "3140dff1-5a1c-4179-a51b-8f4312c72549",
+                  "title": "User Enumeration via Availability Check",
+                  "status": "Open",
+                  "severity": "Medium",
+                  "type": "Information disclosure",
+                  "description": "An attacker could use the availability check to know what email address has registered",
+                  "mitigation": "Use rate limit",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 9,
+                  "score": ""
+                }
+              ],
+              "threatFrequency": {
+                "spoofing": 0,
+                "tampering": 0,
+                "repudiation": 0,
+                "informationDisclosure": 1,
+                "denialOfService": 0,
+                "elevationOfPrivilege": 0
+              }
             },
             "children": []
           },
@@ -2092,6 +2114,7 @@
             },
             "visible": true,
             "shape": "process",
+            "zIndex": 3,
             "ports": {
               "groups": {
                 "top": {
@@ -2188,8 +2211,7 @@
               "isWebApplication": false,
               "privilegeLevel": "",
               "threats": []
-            },
-            "zIndex": 3
+            }
           },
           {
             "position": {
@@ -2212,6 +2234,7 @@
             },
             "visible": true,
             "shape": "store",
+            "zIndex": 4,
             "ports": {
               "groups": {
                 "top": {
@@ -2295,7 +2318,6 @@
               ]
             },
             "id": "bc2bcf17-86d5-4ae6-a5ee-f25c8146493f",
-            "zIndex": 4,
             "data": {
               "type": "tm.Store",
               "name": "Store",
@@ -2451,60 +2473,6 @@
             "labels": [
               "Data Flow"
             ],
-            "id": "8122b876-51f4-4fcf-acfe-811a894c5c19",
-            "source": {
-              "cell": "663787f9-03ad-4882-92a9-6ec856302f91",
-              "port": "34d45fb7-fcfa-4016-a166-7c631dbe205d"
-            },
-            "target": {
-              "cell": "330c4344-cea0-4e99-97c0-bf267beea00a",
-              "port": "0b384e71-5f3b-413c-a3fe-7a34102cef0d"
-            },
-            "vertices": [
-              {
-                "x": 310,
-                "y": 340
-              }
-            ]
-          },
-          {
-            "shape": "flow",
-            "attrs": {
-              "line": {
-                "stroke": "#333333",
-                "targetMarker": {
-                  "name": "block"
-                },
-                "sourceMarker": {
-                  "name": ""
-                },
-                "strokeDasharray": null
-              }
-            },
-            "width": 200,
-            "height": 100,
-            "zIndex": 10,
-            "connector": "smooth",
-            "data": {
-              "type": "tm.Flow",
-              "name": "Data Flow",
-              "description": "",
-              "outOfScope": false,
-              "isTrustBoundary": false,
-              "reasonOutOfScope": "",
-              "hasOpenThreats": false,
-              "isBidirectional": false,
-              "isEncrypted": false,
-              "isPublicNetwork": false,
-              "protocol": "",
-              "threats": [],
-              "trustBoundaryIds": [
-                "a0d370a7-f8c8-4000-b101-5db3c5861233"
-              ]
-            },
-            "labels": [
-              "Data Flow"
-            ],
             "id": "26867c89-e6db-450e-bda0-03fca4c4bd80",
             "source": {
               "cell": "663787f9-03ad-4882-92a9-6ec856302f91",
@@ -2579,10 +2547,10 @@
               "hasOpenThreats": false,
               "crossingFlows": [
                 "086d7e2d-d37d-40f9-bcc9-26b281e83059",
-                "8122b876-51f4-4fcf-acfe-811a894c5c19",
                 "26867c89-e6db-450e-bda0-03fca4c4bd80",
                 "fc017499-f3a0-4884-a856-6b753a9fcdfa",
-                "7128c2b7-be24-46cc-b54f-313b45a49252"
+                "7128c2b7-be24-46cc-b54f-313b45a49252",
+                "9ce9b963-8f53-487b-a34c-8fc4705f037c"
               ],
               "containedElements": [
                 "5ab43b08-d3a8-427f-9009-0fcab52d8813",
@@ -2663,6 +2631,60 @@
               {
                 "x": 270,
                 "y": 220
+              }
+            ]
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "targetMarker": {
+                  "name": "block"
+                },
+                "sourceMarker": {
+                  "name": ""
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 10,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "Data Flow",
+              "description": "",
+              "outOfScope": false,
+              "isTrustBoundary": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "isBidirectional": false,
+              "isEncrypted": false,
+              "isPublicNetwork": false,
+              "protocol": "",
+              "threats": [],
+              "trustBoundaryIds": [
+                "a0d370a7-f8c8-4000-b101-5db3c5861233"
+              ]
+            },
+            "labels": [
+              "Data Flow"
+            ],
+            "id": "9ce9b963-8f53-487b-a34c-8fc4705f037c",
+            "source": {
+              "cell": "330c4344-cea0-4e99-97c0-bf267beea00a",
+              "port": "0b384e71-5f3b-413c-a3fe-7a34102cef0d"
+            },
+            "target": {
+              "cell": "663787f9-03ad-4882-92a9-6ec856302f91",
+              "port": "34d45fb7-fcfa-4016-a166-7c631dbe205d"
+            },
+            "vertices": [
+              {
+                "x": 300,
+                "y": 360
               }
             ]
           }
@@ -5382,6 +5404,6 @@
     ],
     "diagramTop": 5,
     "reviewer": "Fakhri, Rafi",
-    "threatTop": 8
+    "threatTop": 9
   }
 }
