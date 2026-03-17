@@ -901,7 +901,7 @@
           {
             "position": {
               "x": 10,
-              "y": 130
+              "y": 100
             },
             "size": {
               "width": 160,
@@ -1016,6 +1016,8 @@
             },
             "tools": {
               "items": [
+                "boundary",
+                "button-remove",
                 "boundary",
                 "button-remove"
               ],
