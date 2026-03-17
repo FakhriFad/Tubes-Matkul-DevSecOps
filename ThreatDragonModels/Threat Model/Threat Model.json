@@ -1,0 +1,33 @@
+{
+  "version": "2.6.0",
+  "summary": {
+    "title": "Threat Model",
+    "owner": "Fakhri, Rafi",
+    "description": "An E Commerce Web App",
+    "id": 0
+  },
+  "detail": {
+    "contributors": [
+      {
+        "name": "Fakhri"
+      },
+      {
+        "name": "Rafi"
+      }
+    ],
+    "diagrams": [
+      {
+        "id": 0,
+        "title": "DFD Level 1",
+        "diagramType": "STRIDE",
+        "placeholder": "New STRIDE diagram description",
+        "thumbnail": "./public/content/images/thumbnail.stride.jpg",
+        "version": "2.6.0",
+        "cells": []
+      }
+    ],
+    "diagramTop": 1,
+    "reviewer": "Fakhri, Rafi",
+    "threatTop": 0
+  }
+}
