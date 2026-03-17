@@ -2848,6 +2848,7 @@
             },
             "visible": true,
             "shape": "actor",
+            "zIndex": 1,
             "ports": {
               "groups": {
                 "top": {
@@ -2931,7 +2932,6 @@
               ]
             },
             "id": "33bd0388-c816-4808-8aad-bc48fd1267a7",
-            "zIndex": 1,
             "data": {
               "type": "tm.Actor",
               "name": "User",
@@ -2965,6 +2965,7 @@
             },
             "visible": true,
             "shape": "process",
+            "zIndex": 2,
             "ports": {
               "groups": {
                 "top": {
@@ -3048,7 +3049,6 @@
               ]
             },
             "id": "f9d929ac-1be8-4b24-96bb-dea3ef5e1823",
-            "zIndex": 2,
             "data": {
               "type": "tm.Process",
               "name": "Input \nUsername & \nPassword",
@@ -3085,6 +3085,7 @@
             },
             "visible": true,
             "shape": "process",
+            "zIndex": 3,
             "ports": {
               "groups": {
                 "top": {
@@ -3181,8 +3182,7 @@
               "isWebApplication": false,
               "privilegeLevel": "",
               "threats": []
-            },
-            "zIndex": 3
+            }
           },
           {
             "position": {
@@ -3205,6 +3205,7 @@
             },
             "visible": true,
             "shape": "process",
+            "zIndex": 4,
             "ports": {
               "groups": {
                 "top": {
@@ -3301,8 +3302,7 @@
               "isWebApplication": false,
               "privilegeLevel": "",
               "threats": []
-            },
-            "zIndex": 4
+            }
           },
           {
             "position": {
@@ -3325,6 +3325,7 @@
             },
             "visible": true,
             "shape": "actor",
+            "zIndex": 5,
             "ports": {
               "groups": {
                 "top": {
@@ -3408,7 +3409,6 @@
               ]
             },
             "id": "f814494b-4dca-46a0-b131-abd98f1daa35",
-            "zIndex": 5,
             "data": {
               "type": "tm.Actor",
               "name": "Admin",
@@ -3432,7 +3432,7 @@
             },
             "attrs": {
               "text": {
-                "text": "User Data"
+                "text": "User DB"
               },
               "topLine": {
                 "strokeWidth": 1.5,
@@ -3445,6 +3445,7 @@
             },
             "visible": true,
             "shape": "store",
+            "zIndex": 6,
             "ports": {
               "groups": {
                 "top": {
@@ -3528,10 +3529,9 @@
               ]
             },
             "id": "9452e955-4693-4c4a-a27a-54d6405d38c3",
-            "zIndex": 6,
             "data": {
               "type": "tm.Store",
-              "name": "User Data",
+              "name": "User DB",
               "description": "",
               "outOfScope": false,
               "isTrustBoundary": false,
@@ -3543,6 +3543,13 @@
               "storesCredentials": false,
               "storesInventory": false,
               "threats": []
+            },
+            "tools": {
+              "items": [
+                "boundary",
+                "button-remove"
+              ],
+              "name": null
             }
           },
           {
