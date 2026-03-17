@@ -5431,6 +5431,9 @@
               "height": 60
             },
             "attrs": {
+              "text": {
+                "text": "Cart DB"
+              },
               "topLine": {
                 "strokeWidth": 1.5,
                 "strokeDasharray": null
@@ -5528,7 +5531,7 @@
             "id": "7efad99f-0a76-4aa1-ad92-79eb0cbfb20d",
             "data": {
               "type": "tm.Store",
-              "name": "Store",
+              "name": "Cart DB",
               "description": "",
               "outOfScope": false,
               "isTrustBoundary": false,
@@ -5540,6 +5543,13 @@
               "storesCredentials": false,
               "storesInventory": false,
               "threats": []
+            },
+            "tools": {
+              "items": [
+                "boundary",
+                "button-remove"
+              ],
+              "name": null
             }
           }
         ]
