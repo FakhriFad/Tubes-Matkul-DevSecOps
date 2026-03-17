@@ -2187,7 +2187,14 @@
                 "elevationOfPrivilege": 0
               }
             },
-            "children": []
+            "children": [],
+            "tools": {
+              "items": [
+                "boundary",
+                "button-remove"
+              ],
+              "name": null
+            }
           },
           {
             "position": {
@@ -2323,11 +2330,13 @@
                 "text": "User"
               },
               "topLine": {
-                "strokeWidth": 1.5,
+                "stroke": "red",
+                "strokeWidth": 2.5,
                 "strokeDasharray": null
               },
               "bottomLine": {
-                "strokeWidth": 1.5,
+                "stroke": "red",
+                "strokeWidth": 2.5,
                 "strokeDasharray": null
               }
             },
@@ -2424,20 +2433,27 @@
               "outOfScope": false,
               "isTrustBoundary": false,
               "reasonOutOfScope": "",
-              "hasOpenThreats": false,
+              "hasOpenThreats": true,
               "isALog": false,
               "isEncrypted": false,
               "isSigned": false,
               "storesCredentials": false,
               "storesInventory": false,
-              "threats": []
-            },
-            "tools": {
-              "items": [
-                "boundary",
-                "button-remove"
-              ],
-              "name": null
+              "threats": [
+                {
+                  "id": "13c7cacb-b1c6-4af9-8aba-abe651d1f483",
+                  "title": "New STRIDE threat",
+                  "status": "Open",
+                  "severity": "TBD",
+                  "type": "Tampering",
+                  "description": "Provide a description for this threat",
+                  "mitigation": "Provide remediation for this threat or a reason if status is N/A",
+                  "modelType": "STRIDE",
+                  "new": true,
+                  "number": 18,
+                  "score": ""
+                }
+              ]
             }
           },
           {
@@ -2640,53 +2656,6 @@
             "vertices": []
           },
           {
-            "shape": "trust-boundary-curve",
-            "width": 200,
-            "height": 100,
-            "zIndex": 10,
-            "connector": "smooth",
-            "data": {
-              "type": "tm.Boundary",
-              "name": "Trust Boundary",
-              "description": "",
-              "isTrustBoundary": true,
-              "hasOpenThreats": false,
-              "crossingFlows": [
-                "086d7e2d-d37d-40f9-bcc9-26b281e83059",
-                "26867c89-e6db-450e-bda0-03fca4c4bd80",
-                "fc017499-f3a0-4884-a856-6b753a9fcdfa",
-                "7128c2b7-be24-46cc-b54f-313b45a49252",
-                "9ce9b963-8f53-487b-a34c-8fc4705f037c"
-              ],
-              "containedElements": [
-                "5ab43b08-d3a8-427f-9009-0fcab52d8813",
-                "663787f9-03ad-4882-92a9-6ec856302f91"
-              ]
-            },
-            "labels": [
-              "Trust Boundary"
-            ],
-            "id": "a0d370a7-f8c8-4000-b101-5db3c5861233",
-            "source": {
-              "x": 720,
-              "y": 80
-            },
-            "target": {
-              "x": 720,
-              "y": 460
-            },
-            "vertices": [
-              {
-                "x": 420,
-                "y": 120
-              },
-              {
-                "x": 400,
-                "y": 420
-              }
-            ]
-          },
-          {
             "shape": "flow",
             "attrs": {
               "line": {
@@ -2791,6 +2760,53 @@
               {
                 "x": 300,
                 "y": 360
+              }
+            ]
+          },
+          {
+            "shape": "trust-boundary-curve",
+            "width": 200,
+            "height": 100,
+            "zIndex": 10,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Boundary",
+              "name": "Trust Boundary",
+              "description": "",
+              "isTrustBoundary": true,
+              "hasOpenThreats": false,
+              "crossingFlows": [
+                "086d7e2d-d37d-40f9-bcc9-26b281e83059",
+                "26867c89-e6db-450e-bda0-03fca4c4bd80",
+                "fc017499-f3a0-4884-a856-6b753a9fcdfa",
+                "7128c2b7-be24-46cc-b54f-313b45a49252",
+                "9ce9b963-8f53-487b-a34c-8fc4705f037c"
+              ],
+              "containedElements": [
+                "5ab43b08-d3a8-427f-9009-0fcab52d8813",
+                "663787f9-03ad-4882-92a9-6ec856302f91"
+              ]
+            },
+            "labels": [
+              "Trust Boundary"
+            ],
+            "id": "a0d370a7-f8c8-4000-b101-5db3c5861233",
+            "source": {
+              "x": 720,
+              "y": 80
+            },
+            "target": {
+              "x": 720,
+              "y": 460
+            },
+            "vertices": [
+              {
+                "x": 420,
+                "y": 120
+              },
+              {
+                "x": 400,
+                "y": 420
               }
             ]
           }
@@ -5510,6 +5526,6 @@
     ],
     "diagramTop": 5,
     "reviewer": "Fakhri, Rafi",
-    "threatTop": 17
+    "threatTop": 18
   }
 }
