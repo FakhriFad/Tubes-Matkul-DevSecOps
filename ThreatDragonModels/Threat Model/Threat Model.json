@@ -2223,6 +2223,9 @@
               "height": 60
             },
             "attrs": {
+              "text": {
+                "text": "User"
+              },
               "topLine": {
                 "strokeWidth": 1.5,
                 "strokeDasharray": null
@@ -2320,7 +2323,7 @@
             "id": "bc2bcf17-86d5-4ae6-a5ee-f25c8146493f",
             "data": {
               "type": "tm.Store",
-              "name": "Store",
+              "name": "User",
               "description": "",
               "outOfScope": false,
               "isTrustBoundary": false,
@@ -2332,6 +2335,13 @@
               "storesCredentials": false,
               "storesInventory": false,
               "threats": []
+            },
+            "tools": {
+              "items": [
+                "boundary",
+                "button-remove"
+              ],
+              "name": null
             }
           },
           {
