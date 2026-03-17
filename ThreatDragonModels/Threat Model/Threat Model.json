@@ -2327,7 +2327,7 @@
             },
             "attrs": {
               "text": {
-                "text": "User"
+                "text": "User DB"
               },
               "topLine": {
                 "stroke": "red",
@@ -2428,7 +2428,7 @@
             "id": "bc2bcf17-86d5-4ae6-a5ee-f25c8146493f",
             "data": {
               "type": "tm.Store",
-              "name": "User",
+              "name": "User DB",
               "description": "",
               "outOfScope": false,
               "isTrustBoundary": false,
@@ -2454,6 +2454,13 @@
                   "score": ""
                 }
               ]
+            },
+            "tools": {
+              "items": [
+                "boundary",
+                "button-remove"
+              ],
+              "name": null
             }
           },
           {
