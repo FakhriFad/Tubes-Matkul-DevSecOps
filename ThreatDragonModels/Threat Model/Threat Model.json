@@ -401,6 +401,19 @@
                   "new": false,
                   "number": 6,
                   "score": ""
+                },
+                {
+                  "id": "699fa77c-80cc-44a8-8dac-cb7593b30c86",
+                  "title": "New STRIDE threat",
+                  "status": "Open",
+                  "severity": "TBD",
+                  "type": "Spoofing",
+                  "description": "Provide a description for this threat",
+                  "mitigation": "Provide remediation for this threat or a reason if status is N/A",
+                  "modelType": "STRIDE",
+                  "new": true,
+                  "number": 17,
+                  "score": ""
                 }
               ],
               "threatFrequency": {
@@ -556,6 +569,19 @@
                   "new": false,
                   "number": 4,
                   "score": ""
+                },
+                {
+                  "id": "405bbf87-ae29-4fe1-bc56-865d5d50e9b5",
+                  "title": "Brute Force Cracking",
+                  "status": "Open",
+                  "severity": "Medium",
+                  "type": "Denial of service",
+                  "description": "An attacker can try to brute force the login page",
+                  "mitigation": "Use WAF or rate limiting",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 14,
+                  "score": ""
                 }
               ],
               "threatFrequency": {
@@ -563,7 +589,7 @@
                 "tampering": 0,
                 "repudiation": 0,
                 "informationDisclosure": 1,
-                "denialOfService": 0,
+                "denialOfService": 1,
                 "elevationOfPrivilege": 0
               }
             }
@@ -688,18 +714,33 @@
               "threats": [
                 {
                   "id": "27e6dfde-1357-4ef1-965e-fc05e816bc91",
-                  "title": "New STRIDE threat",
+                  "title": "Malicious Change",
                   "status": "Open",
-                  "severity": "TBD",
-                  "type": "Spoofing",
-                  "description": "Provide a description for this threat",
-                  "mitigation": "Provide remediation for this threat or a reason if status is N/A",
+                  "severity": "High",
+                  "type": "Repudiation",
+                  "description": "Someone can just modify/delete item data without any trace",
+                  "mitigation": "Implement Audit Log to store data like IP and timestamp to a read only data base",
                   "modelType": "STRIDE",
-                  "new": true,
+                  "new": false,
                   "number": 8,
                   "score": ""
                 }
-              ]
+              ],
+              "threatFrequency": {
+                "spoofing": 0,
+                "tampering": 0,
+                "repudiation": 1,
+                "informationDisclosure": 0,
+                "denialOfService": 0,
+                "elevationOfPrivilege": 0
+              }
+            },
+            "tools": {
+              "items": [
+                "boundary",
+                "button-remove"
+              ],
+              "name": null
             }
           },
           {
@@ -975,11 +1016,13 @@
                 "text": "User DB"
               },
               "topLine": {
-                "strokeWidth": 1.5,
+                "stroke": "red",
+                "strokeWidth": 2.5,
                 "strokeDasharray": null
               },
               "bottomLine": {
-                "strokeWidth": 1.5,
+                "stroke": "red",
+                "strokeWidth": 2.5,
                 "strokeDasharray": null
               }
             },
@@ -1076,13 +1119,33 @@
               "outOfScope": false,
               "isTrustBoundary": false,
               "reasonOutOfScope": "",
-              "hasOpenThreats": false,
+              "hasOpenThreats": true,
               "isALog": false,
               "isEncrypted": false,
               "isSigned": false,
               "storesCredentials": false,
               "storesInventory": false,
-              "threats": []
+              "threats": [
+                {
+                  "id": "34609719-3a8b-4337-a534-9b217fd2bb88",
+                  "title": "Information Security",
+                  "status": "Open",
+                  "severity": "High",
+                  "type": "Information disclosure",
+                  "description": "User data can be stolen if attacker have access to the db",
+                  "mitigation": "Encrypt the user data",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 12,
+                  "score": ""
+                }
+              ],
+              "threatFrequency": {
+                "tampering": 0,
+                "repudiation": 0,
+                "informationDisclosure": 1,
+                "denialOfService": 0
+              }
             }
           },
           {
@@ -1576,7 +1639,8 @@
             "shape": "flow",
             "attrs": {
               "line": {
-                "stroke": "#333333",
+                "stroke": "red",
+                "strokeWidth": 2.5,
                 "targetMarker": {
                   "name": "block"
                 },
@@ -1597,15 +1661,47 @@
               "outOfScope": false,
               "isTrustBoundary": false,
               "reasonOutOfScope": "",
-              "hasOpenThreats": false,
+              "hasOpenThreats": true,
               "isBidirectional": false,
               "isEncrypted": false,
               "isPublicNetwork": false,
               "protocol": "",
-              "threats": [],
+              "threats": [
+                {
+                  "id": "99058d2e-82da-485c-a7c0-444bbc7a1b96",
+                  "title": "Data Tampering",
+                  "status": "Open",
+                  "severity": "Medium",
+                  "type": "Tampering",
+                  "description": "Someone can modify the data while moving trough the public internet",
+                  "mitigation": "Use HTTPS (TLS)",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 15,
+                  "score": ""
+                },
+                {
+                  "id": "63d7880b-6216-4985-a7af-ca0a3d030e95",
+                  "title": "Data Sniffing",
+                  "status": "Open",
+                  "severity": "Medium",
+                  "type": "Information disclosure",
+                  "description": "Data can be read while moving trough the public internet",
+                  "mitigation": "Use HTTPS (TLS)",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 16,
+                  "score": ""
+                }
+              ],
               "trustBoundaryIds": [
                 "d391fb29-c343-49ec-bf09-17609986ffa4"
-              ]
+              ],
+              "threatFrequency": {
+                "tampering": 1,
+                "informationDisclosure": 1,
+                "denialOfService": 0
+              }
             },
             "labels": [
               "Data Flow"
@@ -5414,6 +5510,6 @@
     ],
     "diagramTop": 5,
     "reviewer": "Fakhri, Rafi",
-    "threatTop": 11
+    "threatTop": 17
   }
 }
