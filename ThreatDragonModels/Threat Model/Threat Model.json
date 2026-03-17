@@ -3984,6 +3984,7 @@
             },
             "visible": true,
             "shape": "actor",
+            "zIndex": 1,
             "ports": {
               "groups": {
                 "top": {
@@ -4067,7 +4068,6 @@
               ]
             },
             "id": "5c41365b-ccf6-4bf8-b2db-e8e8fd0048db",
-            "zIndex": 1,
             "data": {
               "type": "tm.Actor",
               "name": "Admin",
@@ -4101,6 +4101,7 @@
             },
             "visible": true,
             "shape": "process",
+            "zIndex": 2,
             "ports": {
               "groups": {
                 "top": {
@@ -4184,7 +4185,6 @@
               ]
             },
             "id": "3370250d-efd7-4f6f-91c0-c4e3129c9316",
-            "zIndex": 2,
             "data": {
               "type": "tm.Process",
               "name": "Input \nProduk",
@@ -4221,6 +4221,7 @@
             },
             "visible": true,
             "shape": "process",
+            "zIndex": 3,
             "ports": {
               "groups": {
                 "top": {
@@ -4304,7 +4305,6 @@
               ]
             },
             "id": "8ce34d28-129f-4022-8fb3-663ab5b692a7",
-            "zIndex": 3,
             "data": {
               "type": "tm.Process",
               "name": "Update\nStock",
@@ -4635,7 +4635,7 @@
             },
             "attrs": {
               "text": {
-                "text": "Item"
+                "text": "Item DB"
               },
               "topLine": {
                 "strokeWidth": 1.5,
@@ -4648,6 +4648,7 @@
             },
             "visible": true,
             "shape": "store",
+            "zIndex": 11,
             "ports": {
               "groups": {
                 "top": {
@@ -4731,10 +4732,9 @@
               ]
             },
             "id": "97b3e18d-80a5-4953-b96d-bfb1aa504977",
-            "zIndex": 11,
             "data": {
               "type": "tm.Store",
-              "name": "Item",
+              "name": "Item DB",
               "description": "",
               "outOfScope": false,
               "isTrustBoundary": false,
@@ -4746,6 +4746,13 @@
               "storesCredentials": false,
               "storesInventory": false,
               "threats": []
+            },
+            "tools": {
+              "items": [
+                "boundary",
+                "button-remove"
+              ],
+              "name": null
             }
           }
         ]
