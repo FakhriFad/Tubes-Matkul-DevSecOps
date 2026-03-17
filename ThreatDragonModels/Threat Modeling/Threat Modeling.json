@@ -15,17 +15,7 @@
         "name": "Rafi"
       }
     ],
-    "diagrams": [
-      {
-        "id": 0,
-        "title": "New STRIDE diagram",
-        "diagramType": "STRIDE",
-        "placeholder": "New STRIDE diagram description",
-        "thumbnail": "./public/content/images/thumbnail.stride.jpg",
-        "version": "2.6.0",
-        "cells": []
-      }
-    ],
+    "diagrams": [],
     "diagramTop": 2,
     "reviewer": "Fakhri, Rafi",
     "threatTop": 0
