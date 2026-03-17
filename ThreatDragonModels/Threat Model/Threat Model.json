@@ -4653,6 +4653,7 @@
             },
             "visible": true,
             "shape": "actor",
+            "zIndex": 1,
             "ports": {
               "groups": {
                 "top": {
@@ -4736,7 +4737,6 @@
               ]
             },
             "id": "4560c04c-637d-4e08-9d32-e085767efd17",
-            "zIndex": 1,
             "data": {
               "type": "tm.Actor",
               "name": "User",
@@ -4770,6 +4770,7 @@
             },
             "visible": true,
             "shape": "process",
+            "zIndex": 2,
             "ports": {
               "groups": {
                 "top": {
@@ -4853,7 +4854,6 @@
               ]
             },
             "id": "32d8e41c-e279-47bc-8e9f-adbc35c377fb",
-            "zIndex": 2,
             "data": {
               "type": "tm.Process",
               "name": "Pilih \nProduk",
@@ -4890,6 +4890,7 @@
             },
             "visible": true,
             "shape": "process",
+            "zIndex": 3,
             "ports": {
               "groups": {
                 "top": {
@@ -4973,7 +4974,6 @@
               ]
             },
             "id": "77cdd03e-63e5-40dd-b565-8f9a6ac5550f",
-            "zIndex": 3,
             "data": {
               "type": "tm.Process",
               "name": "Tambah\nke Cart",
@@ -5309,6 +5309,7 @@
             },
             "visible": true,
             "shape": "store",
+            "zIndex": 11,
             "ports": {
               "groups": {
                 "top": {
@@ -5392,7 +5393,6 @@
               ]
             },
             "id": "7efad99f-0a76-4aa1-ad92-79eb0cbfb20d",
-            "zIndex": 11,
             "data": {
               "type": "tm.Store",
               "name": "Store",
@@ -5414,6 +5414,6 @@
     ],
     "diagramTop": 5,
     "reviewer": "Fakhri, Rafi",
-    "threatTop": 9
+    "threatTop": 11
   }
 }
