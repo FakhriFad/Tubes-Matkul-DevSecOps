@@ -1,0 +1,60 @@
+# ============================================================
+# ZAP Rules — suppress false positives for EcomShop
+#
+# Format: ALERT_ID  ACTION  PARAMETER  EVIDENCE
+#   Actions: IGNORE, WARN, FAIL
+#   Use IGNORE only for confirmed false positives.
+#   Leave legitimate findings as WARN or FAIL.
+#
+# Rule IDs: https://www.zaproxy.org/docs/alerts/
+# ============================================================
+
+# ── Informational / low-risk (set to WARN so they appear but don't fail CI) ──
+
+# 10015 – Incomplete or No Cache-control Header (Next.js sets its own)
+10015	WARN	(null)	(null)
+
+# 10016 – Web Browser XSS Protection Not Enabled
+# We set X-XSS-Protection in nginx but ZAP still warns; WARN rather than FAIL
+10016	WARN	(null)	(null)
+
+# 10021 – X-Content-Type-Options Header Missing (nginx sets nosniff; false positive)
+10021	WARN	(null)	(null)
+
+# 10036 – Server Leaks Version Information via Server HTTP Response Header Field
+# nginx/alpine version string — acceptable in dev
+10036	WARN	(null)	(null)
+
+# 10055 – CSP Not Set (we don't set a full CSP yet — listed in production checklist)
+10055	WARN	(null)	(null)
+
+# 10096 – Timestamp Disclosure — Unix (JWT iat/exp fields are intentional)
+10096	IGNORE	(null)	(null)
+
+# 10110 – Dangerous JS Functions — eval() in Next.js build output (framework code)
+10110	WARN	(null)	(null)
+
+# ── Medium risk (WARN — investigate but don't block CI) ──
+
+# 40012 – Cross Site Scripting (Reflected) — test carefully before ignoring
+40012	WARN	(null)	(null)
+
+# 40014 – Cross Site Scripting (Persistent) — review ZAP report manually
+40014	WARN	(null)	(null)
+
+# ── High risk (FAIL — must be fixed before merge) ──
+
+# 40018 – SQL Injection — never ignore
+40018	FAIL	(null)	(null)
+
+# 40019 – SQL Injection (MySQL) — never ignore
+40019	FAIL	(null)	(null)
+
+# 90022 – Application Error Disclosure — stack traces leaking to client
+90022	FAIL	(null)	(null)
+
+# 10054 – Cookie Without SameSite Attribute — our JWT cookies set samesite=strict
+10054	FAIL	(null)	(null)
+
+# 10202 – Absence of Anti-CSRF Tokens (only FAIL for form submissions)
+10202	WARN	(null)	(null)

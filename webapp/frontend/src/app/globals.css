@@ -1,0 +1,117 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: 'DM Serif Display', serif;
+  --font-body:    'DM Sans', sans-serif;
+  --font-mono:    'DM Mono', monospace;
+
+  --ink:   #0d0d0d;
+  --cream: #f5f0e8;
+  --rust:  #c94a2b;
+  --sage:  #4a7c59;
+  --gold:  #c9a227;
+  --muted: #888880;
+  --border: #d4cfc5;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--cream);
+  color: var(--ink);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  line-height: 1.2;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--cream); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* Focus ring */
+:focus-visible {
+  outline: 2px solid var(--rust);
+  outline-offset: 2px;
+}
+
+/* ── Utility classes ───────────────────────────────────────────────────────── */
+@layer components {
+  .btn-primary {
+    @apply bg-ink text-cream px-6 py-3 text-sm font-medium tracking-wide
+           transition-all duration-200 hover:bg-rust active:scale-95
+           disabled:opacity-40 disabled:cursor-not-allowed;
+    border-radius: 2px;
+  }
+
+  .btn-outline {
+    @apply border border-ink text-ink px-6 py-3 text-sm font-medium tracking-wide
+           transition-all duration-200 hover:bg-ink hover:text-cream active:scale-95
+           disabled:opacity-40 disabled:cursor-not-allowed;
+    border-radius: 2px;
+  }
+
+  .btn-ghost {
+    @apply text-muted px-4 py-2 text-sm transition-colors duration-150 hover:text-ink;
+  }
+
+  .input-field {
+    @apply w-full border border-border bg-white px-4 py-3 text-sm text-ink
+           placeholder-muted transition-colors duration-150
+           focus:border-ink focus:outline-none;
+    border-radius: 2px;
+    font-family: var(--font-body);
+  }
+
+  .card {
+    @apply bg-white border border-border p-6;
+    border-radius: 4px;
+  }
+
+  .label {
+    @apply block text-xs font-medium tracking-widest uppercase text-muted mb-2;
+  }
+
+  .badge {
+    @apply inline-block px-2 py-0.5 text-xs font-mono tracking-wide border;
+    border-radius: 2px;
+  }
+
+  .badge-admin {
+    @apply badge bg-rust/10 text-rust border-rust/30;
+  }
+
+  .badge-customer {
+    @apply badge bg-sage/10 text-sage border-sage/30;
+  }
+}
+
+/* ── Page transition ───────────────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.fade-up {
+  animation: fadeUp 0.35s ease forwards;
+}
+
+/* ── Stagger utility ───────────────────────────────────────────────────────── */
+.stagger > * { animation: fadeUp 0.35s ease both; }
+.stagger > *:nth-child(1) { animation-delay: 0.05s; }
+.stagger > *:nth-child(2) { animation-delay: 0.10s; }
+.stagger > *:nth-child(3) { animation-delay: 0.15s; }
+.stagger > *:nth-child(4) { animation-delay: 0.20s; }
+.stagger > *:nth-child(5) { animation-delay: 0.25s; }
+.stagger > *:nth-child(6) { animation-delay: 0.30s; }
+.stagger > *:nth-child(7) { animation-delay: 0.35s; }
+.stagger > *:nth-child(8) { animation-delay: 0.40s; }

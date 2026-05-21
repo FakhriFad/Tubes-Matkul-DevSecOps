@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EcomShop — SAST Report</title>
+<style>
+  :root {
+    --ink: #0d0d0d; --cream: #f5f0e8; --rust: #c94a2b;
+    --sage: #4a7c59; --gold: #c9a227; --border: #d4cfc5; --muted: #888880;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--cream);
+          color: var(--ink); line-height: 1.6; }
+  header { background: var(--ink); color: #fff; padding: 2rem 3rem; }
+  header h1 { font-size: 1.8rem; font-weight: 700; }
+  header p  { color: #aaa; font-size: 0.9rem; margin-top: 0.25rem; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 2rem 3rem; }
+  .summary { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; margin: 2rem 0; }
+  .scard { background: #fff; border: 1px solid var(--border); border-radius: 4px;
+             padding: 1.25rem; text-align: center; }
+  .scard .count { font-size: 2rem; font-weight: 700; }
+  .scard .label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em;
+                   color: var(--muted); margin-top: 0.25rem; }
+  .scard.CRITICAL { border-top: 3px solid #d63031; }
+  .scard.HIGH     { border-top: 3px solid #e17055; }
+  .scard.MEDIUM   { border-top: 3px solid #fdcb6e; }
+  .scard.LOW      { border-top: 3px solid #74b9ff; }
+  .scard.total    { border-top: 3px solid var(--ink); }
+  .meta { background: #fff; border: 1px solid var(--border); padding: 1rem 1.5rem;
+           border-radius: 4px; margin-bottom: 2rem; font-size: 0.85rem; color: var(--muted); }
+  .meta span { color: var(--ink); font-weight: 600; }
+  h2 { font-size: 1.2rem; margin: 2rem 0 1rem; color: var(--rust); }
+  table { width: 100%; border-collapse: collapse; background: #fff;
+           border: 1px solid var(--border); border-radius: 4px; overflow: hidden;
+           font-size: 0.85rem; }
+  th { background: var(--ink); color: #fff; text-align: left; padding: 0.75rem 1rem;
+        font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; }
+  td { padding: 0.7rem 1rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:nth-child(even) { background: #fafafa; }
+  .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 3px;
+             font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; }
+  .badge.CRITICAL { background: #fee; color: #d63031; border: 1px solid #fcc; }
+  .badge.HIGH     { background: #fff0ec; color: #e17055; border: 1px solid #fdc; }
+  .badge.MEDIUM   { background: #fffbec; color: #b8860b; border: 1px solid #fde; }
+  .badge.LOW      { background: #ecf6ff; color: #2980b9; border: 1px solid #cde; }
+  .code { font-family: 'Courier New', monospace; background: #f5f5f5; border-radius: 3px;
+           padding: 0.15rem 0.4rem; font-size: 0.8rem; word-break: break-all; }
+  .filepath { font-family: monospace; font-size: 0.78rem; color: #555; }
+  .note { font-size: 0.75rem; color: var(--muted); font-style: italic; margin-top: 0.25rem; }
+  .no-findings { text-align: center; padding: 3rem; color: var(--muted); }
+  .cwe { font-size: 0.7rem; color: var(--muted); }
+  footer { margin: 3rem 0 1rem; text-align: center; font-size: 0.8rem; color: var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <h1>EcomShop — SAST Report</h1>
+  <p>Static Application Security Testing · Generated 2026-05-20 18:12:54</p>
+</header>
+<div class="container">
+
+  <div class="summary">
+    <div class="scard CRITICAL"><div class="count" style="color:#d63031">0</div>
+      <div class="label">Critical</div></div>
+    <div class="scard HIGH">    <div class="count" style="color:#e17055">0</div>
+      <div class="label">High</div></div>
+    <div class="scard MEDIUM">  <div class="count" style="color:#b8860b">1</div>
+      <div class="label">Medium</div></div>
+    <div class="scard LOW">     <div class="count" style="color:#2980b9">1</div>
+      <div class="label">Low</div></div>
+    <div class="scard total">   <div class="count">2</div>
+      <div class="label">Total</div></div>
+  </div>
+
+  <div class="meta">
+    Scanned <span>28</span> files &nbsp;·&nbsp;
+    Project root: <span>/home/claude/ecommerce</span> &nbsp;·&nbsp;
+    Rules applied: <span>15</span> &nbsp;·&nbsp;
+    Scan duration: <span>49ms</span>
+  </div>
+
+  
+    <h2>Findings (2)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Severity</th><th>Rule</th><th>Description</th><th>Location &amp; Code</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="badge MEDIUM">MEDIUM</span></td>
+          <td><strong>SEC-008</strong><br><span class="cwe">CWE-755 · A09:2021</span></td>
+          <td>Unhandled Promise Rejection<br><span class="note">.then() without a corresponding .catch() error handler.</span></td>
+          <td><span class="filepath">backend/src/index.js:105</span><br>
+              <code class="code">.then(() => {</code></td>
+        </tr>
+        <tr>
+          <td><span class="badge LOW">LOW</span></td>
+          <td><strong>SEC-007</strong><br><span class="cwe">CWE-532 · A09:2021</span></td>
+          <td>console.log in Production Code<br><span class="note">console.log/debug may leak sensitive data in production logs.</span></td>
+          <td><span class="filepath">frontend/src/app/error.js:11</span><br>
+              <code class="code">console.error('Page error:', error);</code></td>
+        </tr></tbody>
+    </table>
+
+</div>
+<footer>EcomShop SAST Scanner · 2026-05-20 18:12:54</footer>
+</body>
+</html>

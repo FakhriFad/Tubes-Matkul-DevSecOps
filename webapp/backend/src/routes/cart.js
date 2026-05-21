@@ -1,4 +1,5 @@
 const logger = require('../config/logger');
+const { metrics } = require('../config/metrics');
 const express = require('express');
 const { body, param, validationResult } = require('express-validator');
 
@@ -244,6 +245,7 @@ router.post('/checkout', authenticate, async (req, res) => {
     );
 
     await client.query('COMMIT');
+    metrics.cartCheckouts.inc({ result: 'success' });
     await writeAuditLog({ userId: req.user.id, action: 'CHECKOUT', entity: 'carts', entityId: cartId, req });
     return res.json({ message: 'Checkout successful', cart_id: cartId });
   } catch (err) {

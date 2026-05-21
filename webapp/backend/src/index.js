@@ -10,6 +10,8 @@ const path       = require('path');
 const db              = require('./config/db');
 const logger          = require('./config/logger');
 const { auditMiddleware } = require('./middleware/auditLog');
+const { metricsMiddleware, metricsHandler } = require('./config/metrics');
+const { seedAdmin }   = require('./db/seed');
 
 // Pipe morgan through winston
 const morganStream = { write: (msg) => logger.http(msg.trim()) };
@@ -31,6 +33,10 @@ app.use(cors({
   origin:      process.env.CORS_ORIGIN || 'https://localhost',
   credentials: true,
 }));
+
+// ── Metrics (Prometheus) ──────────────────────────────────────────────────────
+app.use(metricsMiddleware);
+app.get('/metrics', metricsHandler);   // scraped by Prometheus
 
 // ── Body parsing ──────────────────────────────────────────────────────────────
 app.use(express.json({ limit: '10kb' }));
@@ -86,11 +92,13 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
+
 // ── Database init then start ──────────────────────────────────────────────────
 async function initDB() {
   const schema = fs.readFileSync(path.join(__dirname, 'db/schema.sql'), 'utf8');
   await db.query(schema);
   logger.info('Database schema applied');
+  await seedAdmin(db);
 }
 
 initDB()

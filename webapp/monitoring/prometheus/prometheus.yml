@@ -1,0 +1,39 @@
+global:
+  scrape_interval:     15s
+  evaluation_interval: 15s
+  external_labels:
+    project: 'ecomshop'
+
+scrape_configs:
+
+  # Backend Node.js metrics (exposed via prom-client)
+  - job_name: 'ecomshop-backend'
+    static_configs:
+      - targets: ['backend:4000']
+    metrics_path: '/metrics'
+    scheme: http
+
+  # Node Exporter — host OS metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+
+  # Nginx metrics via nginx-exporter
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx-exporter:9113']
+
+  # PostgreSQL metrics
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+
+  # Redis metrics
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

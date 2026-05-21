@@ -1,4 +1,5 @@
 const logger = require('../config/logger');
+const { metrics } = require('../config/metrics');
 const express  = require('express');
 const bcrypt   = require('bcrypt');
 const jwt      = require('jsonwebtoken');
@@ -9,6 +10,7 @@ const db     = require('../config/db');
 const redis  = require('../config/redis');
 const { authenticate }  = require('../middleware/auth');
 const { writeAuditLog } = require('../middleware/auditLog');
+const { loginLimiter, recordFailure, recordSuccess } = require('../middleware/bruteforce');
 
 const router = express.Router();
 
@@ -63,6 +65,7 @@ router.post(
       );
       const user = result.rows[0];
 
+      metrics.userRegistrations.inc();
       await writeAuditLog({ userId: user.id, action: 'REGISTER', entity: 'users', entityId: user.id, req });
 
       return res.status(201).json({ message: 'Registration successful', user });
@@ -76,6 +79,7 @@ router.post(
 // ── POST /api/auth/login ──────────────────────────────────────────────────────
 router.post(
   '/login',
+  loginLimiter,
   [
     body('email').isEmail().normalizeEmail(),
     body('password').notEmpty(),
@@ -98,6 +102,8 @@ router.post(
 
       const match = await bcrypt.compare(password, user.password_hash);
       if (!match) {
+        metrics.loginAttempts.inc({ result: 'failure' });
+        await recordFailure(email, req.ip);
         await writeAuditLog({ userId: user.id, action: 'LOGIN_FAILED', entity: 'users', entityId: user.id, req, metadata: { reason: 'bad_password' } });
         return res.status(401).json({ error: 'Invalid credentials' });
       }
@@ -110,12 +116,15 @@ router.post(
         }
         const valid = authenticator.verify({ token: totp, secret: user.mfa_secret });
         if (!valid) {
+          metrics.loginAttempts.inc({ result: 'mfa_failure' });
           await writeAuditLog({ userId: user.id, action: 'LOGIN_MFA_FAILED', entity: 'users', entityId: user.id, req });
           return res.status(401).json({ error: 'Invalid MFA code' });
         }
       }
 
       const token = issueToken(user);
+      metrics.loginAttempts.inc({ result: 'success' });
+      await recordSuccess(email, req.ip);
       await writeAuditLog({ userId: user.id, action: 'LOGIN', entity: 'users', entityId: user.id, req });
 
       return res.json({

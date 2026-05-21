@@ -1,0 +1,38 @@
+{
+  "generated_at": "2026-05-20T18:12:54.266828",
+  "summary": {
+    "CRITICAL": 0,
+    "HIGH": 0,
+    "MEDIUM": 1,
+    "LOW": 1,
+    "TOTAL": 2
+  },
+  "files_scanned": 28,
+  "rules_applied": 15,
+  "findings": [
+    {
+      "rule_id": "SEC-008",
+      "rule_name": "Unhandled Promise Rejection",
+      "severity": "MEDIUM",
+      "cwe": "CWE-755",
+      "owasp": "A09:2021",
+      "description": ".then() without a corresponding .catch() error handler.",
+      "note": "",
+      "file": "/home/claude/ecommerce/backend/src/index.js",
+      "line": 105,
+      "code": "  .then(() => {"
+    },
+    {
+      "rule_id": "SEC-007",
+      "rule_name": "console.log in Production Code",
+      "severity": "LOW",
+      "cwe": "CWE-532",
+      "owasp": "A09:2021",
+      "description": "console.log/debug may leak sensitive data in production logs.",
+      "note": "",
+      "file": "/home/claude/ecommerce/frontend/src/app/error.js",
+      "line": 11,
+      "code": "    console.error('Page error:', error);"
+    }
+  ]
+}

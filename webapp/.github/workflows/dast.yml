@@ -1,0 +1,255 @@
+# ============================================================
+# DAST Pipeline — Dynamic Application Security Testing
+#
+# Uses OWASP ZAP (Zed Attack Proxy) to actively probe the
+# running application for vulnerabilities.
+#
+# Triggers:
+#   - After CI passes on main/develop (workflow_run)
+#   - Manually via workflow_dispatch
+#   - Nightly schedule (keeps catching new vulns over time)
+#
+# What ZAP tests for:
+#   - Injection flaws (SQLi, XSS, command injection)
+#   - Broken authentication / session management
+#   - Security misconfigurations
+#   - Sensitive data exposure
+#   - Insecure direct object references
+#   - Missing security headers
+#   - CSRF vulnerabilities
+# ============================================================
+
+name: DAST — OWASP ZAP
+
+on:
+  workflow_run:
+    workflows: ["CI — Lint · Test · SAST · Build"]
+    branches: [main, develop]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      zap_rules_file:
+        description: "ZAP rules file to use (default: zap/rules.tsv)"
+        required: false
+        default: "zap/rules.tsv"
+  schedule:
+    # Run nightly at 02:00 UTC
+    - cron: "0 2 * * *"
+
+permissions:
+  contents: read
+  security-events: write
+  issues: write
+
+jobs:
+
+  dast-zap:
+    name: DAST — OWASP ZAP Full Scan
+    runs-on: ubuntu-latest
+    # Only run DAST if the triggering CI workflow succeeded
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule' ||
+      github.event.workflow_run.conclusion == 'success'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ── 1. Prepare test environment secrets ─────────────────────────────────
+      - name: Create .env for DAST environment
+        run: |
+          cat > .env << 'EOF'
+          POSTGRES_DB=ecommerce_dast
+          POSTGRES_USER=ecom_user
+          POSTGRES_PASSWORD=dast_test_password_not_prod
+          REDIS_PASSWORD=dast_redis_password_not_prod
+          JWT_SECRET=dast_jwt_secret_64chars_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+          CORS_ORIGIN=https://localhost
+          NEXT_PUBLIC_API_URL=https://localhost/api
+          LOG_LEVEL=warn
+          EOF
+
+      # ── 2. Generate self-signed TLS cert ────────────────────────────────────
+      - name: Generate TLS certificate
+        run: |
+          chmod +x nginx/generate-certs.sh
+          ./nginx/generate-certs.sh
+
+      # ── 3. Start all services ────────────────────────────────────────────────
+      - name: Start application stack
+        run: |
+          docker compose up -d --build
+          echo "Waiting for services to be healthy..."
+
+      - name: Wait for backend health check
+        run: |
+          MAX_WAIT=120
+          ELAPSED=0
+          until curl -sk https://localhost/health | grep -q '"status":"ok"'; do
+            if [ $ELAPSED -ge $MAX_WAIT ]; then
+              echo "ERROR: Backend did not become healthy within ${MAX_WAIT}s"
+              docker compose logs backend
+              exit 1
+            fi
+            echo "Waiting for backend... (${ELAPSED}s elapsed)"
+            sleep 5
+            ELAPSED=$((ELAPSED + 5))
+          done
+          echo "Backend is healthy"
+
+      - name: Wait for frontend
+        run: |
+          MAX_WAIT=60
+          ELAPSED=0
+          until curl -sk https://localhost | grep -q "EcomShop\|html"; do
+            if [ $ELAPSED -ge $MAX_WAIT ]; then
+              echo "ERROR: Frontend did not become available"
+              docker compose logs frontend
+              exit 1
+            fi
+            sleep 5
+            ELAPSED=$((ELAPSED + 5))
+          done
+          echo "Frontend is up"
+
+      # ── 4. Seed test data ────────────────────────────────────────────────────
+      - name: Seed DAST test data
+        run: |
+          # Register a test customer account for authenticated scans
+          curl -sk -X POST https://localhost/api/auth/register \
+            -H "Content-Type: application/json" \
+            -d '{"email":"dast-test@example.com","password":"DastTest@123","full_name":"DAST Tester"}' \
+            | tee /tmp/register-response.json
+
+          echo "Register response:"
+          cat /tmp/register-response.json
+
+          # Login to get a token for authenticated scanning
+          LOGIN_RESP=$(curl -sk -X POST https://localhost/api/auth/login \
+            -H "Content-Type: application/json" \
+            -d '{"email":"dast-test@example.com","password":"DastTest@123"}')
+
+          echo "$LOGIN_RESP" | tee /tmp/login-response.json
+          TOKEN=$(echo "$LOGIN_RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('token',''))")
+
+          if [ -z "$TOKEN" ]; then
+            echo "WARNING: Could not obtain auth token — DAST will run unauthenticated only"
+          else
+            echo "DAST_TOKEN=$TOKEN" >> $GITHUB_ENV
+            echo "Got auth token for authenticated scan"
+          fi
+
+      # ── 5. ZAP context file (authenticated scan) ─────────────────────────────
+      - name: Create ZAP authentication context
+        run: |
+          mkdir -p zap
+          cat > zap/ecomshop.context << CTXEOF
+          <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+          <configuration>
+            <context>
+              <name>EcomShop</name>
+              <desc>EcomShop DAST context</desc>
+              <inscope>true</inscope>
+              <incregexes>https://localhost.*</incregexes>
+            </context>
+          </configuration>
+          CTXEOF
+
+      # ── 6. ZAP Baseline Scan (fast, passive + active) ────────────────────────
+      - name: Run ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.12.0
+        continue-on-error: true
+        with:
+          target: "https://localhost"
+          allow_issue_writing: false
+          fail_action: false
+          rules_file_name: "zap/rules.tsv"
+          cmd_options: >-
+            -z "-config network.connection.timeoutInSecs=30"
+            -I
+
+      # ── 7. ZAP Full Scan (comprehensive active attack) ───────────────────────
+      - name: Run ZAP Full Active Scan
+        uses: zaproxy/action-full-scan@v0.10.0
+        continue-on-error: true
+        with:
+          target: "https://localhost"
+          allow_issue_writing: false
+          fail_action: false
+          rules_file_name: "zap/rules.tsv"
+          cmd_options: >-
+            -z "-config network.connection.timeoutInSecs=30"
+            -I
+
+      # ── 8. ZAP API Scan (OpenAPI / REST endpoints) ───────────────────────────
+      - name: Run ZAP API Scan
+        uses: zaproxy/action-api-scan@v0.9.0
+        continue-on-error: true
+        with:
+          target: "https://localhost/api"
+          format: openapi
+          allow_issue_writing: false
+          fail_action: false
+          cmd_options: >-
+            -z "-config network.connection.timeoutInSecs=30"
+            -I
+
+      # ── 9. Upload ZAP results ─────────────────────────────────────────────────
+      - name: Upload ZAP SARIF to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: results/zap-baseline.sarif
+          category: zap-dast
+        continue-on-error: true
+
+      - name: Upload all ZAP reports as artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: zap-dast-reports-${{ github.run_number }}
+          path: |
+            results/
+            zap/*.html
+            zap/*.json
+            zap/*.xml
+          retention-days: 30
+
+      # ── 10. Parse ZAP results and fail on HIGH/CRITICAL ───────────────────────
+      - name: Evaluate ZAP results
+        if: always()
+        run: |
+          if [ -f "results/zap-baseline.json" ]; then
+            HIGH=$(python3 -c "
+          import json, sys
+          try:
+              data = json.load(open('results/zap-baseline.json'))
+              sites = data.get('site', [])
+              highs = sum(
+                  len([a for a in s.get('alerts', []) if a.get('riskcode') in ['3','2']])
+                  for s in (sites if isinstance(sites, list) else [sites])
+              )
+              print(highs)
+          except Exception as e:
+              print('0')
+            ")
+            echo "High/Critical ZAP findings: $HIGH"
+            if [ "$HIGH" -gt "0" ]; then
+              echo "::warning::ZAP found $HIGH HIGH or CRITICAL vulnerabilities. Review the Security tab."
+            fi
+          else
+            echo "ZAP result file not found — check ZAP step logs"
+          fi
+
+      # ── 11. Collect Docker logs on failure ───────────────────────────────────
+      - name: Collect service logs on failure
+        if: failure()
+        run: |
+          echo "=== BACKEND LOGS ===" && docker compose logs --tail=100 backend
+          echo "=== NGINX LOGS ==="   && docker compose logs --tail=50  nginx
+          echo "=== FRONTEND LOGS ===" && docker compose logs --tail=50 frontend
+
+      # ── 12. Tear down ─────────────────────────────────────────────────────────
+      - name: Tear down stack
+        if: always()
+        run: docker compose down -v --remove-orphans

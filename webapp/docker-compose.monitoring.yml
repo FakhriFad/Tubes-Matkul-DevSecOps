@@ -1,0 +1,141 @@
+# ============================================================
+# EcomShop — Monitoring Stack
+# Run alongside the main stack:
+#   docker compose -f docker-compose.yml -f docker-compose.monitoring.yml up
+#
+# Or standalone (connects to the main stack networks):
+#   docker compose -f docker-compose.monitoring.yml up
+#
+# Services:
+#   prometheus      :9090  — metrics scraper & time-series DB
+#   grafana         :3001  — dashboards (admin/admin on first login)
+#   node-exporter   :9100  — host OS metrics
+#   redis-exporter  :9121  — Redis metrics
+#   postgres-exporter:9187 — PostgreSQL metrics
+#   nginx-exporter  :9113  — Nginx stub_status metrics
+# ============================================================
+
+networks:
+  # Attach to the main app networks so exporters can reach services
+  ecommerce_public_net:
+    external: true
+  ecommerce_backend_net:
+    external: true
+  monitoring_net:
+
+volumes:
+  prometheus_data:
+  grafana_data:
+
+services:
+
+  # ── Prometheus ──────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.51.2
+    container_name: ecom_prometheus
+    restart: unless-stopped
+    networks:
+      - monitoring_net
+      - ecommerce_public_net    # reach backend:4000/metrics
+      - ecommerce_backend_net   # reach postgres, redis exporters
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ── Grafana ─────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: ecom_grafana
+    restart: unless-stopped
+    networks:
+      - monitoring_net
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD:    ${GRAFANA_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP:        "false"
+      GF_SERVER_ROOT_URL:            http://localhost:3001
+      GF_INSTALL_PLUGINS:            ""
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ── Node Exporter (host OS metrics) ────────────────────────
+  node-exporter:
+    image: prom/node-exporter:v1.8.0
+    container_name: ecom_node_exporter
+    restart: unless-stopped
+    networks:
+      - monitoring_net
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+
+  # ── Redis Exporter ──────────────────────────────────────────
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.62.0
+    container_name: ecom_redis_exporter
+    restart: unless-stopped
+    networks:
+      - monitoring_net
+      - ecommerce_backend_net
+    ports:
+      - "9121:9121"
+    environment:
+      REDIS_ADDR:     redis://redis:6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+
+  # ── PostgreSQL Exporter ─────────────────────────────────────
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    container_name: ecom_postgres_exporter
+    restart: unless-stopped
+    networks:
+      - monitoring_net
+      - ecommerce_backend_net
+    ports:
+      - "9187:9187"
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER:-ecom_user}:${POSTGRES_PASSWORD:?}@postgres:5432/${POSTGRES_DB:-ecommerce}?sslmode=disable"
+
+  # ── Nginx Exporter ──────────────────────────────────────────
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:1.1.0
+    container_name: ecom_nginx_exporter
+    restart: unless-stopped
+    networks:
+      - monitoring_net
+      - ecommerce_public_net
+    ports:
+      - "9113:9113"
+    command:
+      - '--nginx.scrape-uri=http://nginx/stub_status'

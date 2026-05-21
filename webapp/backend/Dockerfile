@@ -9,13 +9,15 @@ RUN if [ -f package-lock.json ]; then \
     fi
 
 COPY src/ ./src/
+# Copy the healthcheck script so it is always present in the final image
+COPY healthcheck.js ./healthcheck.js
 
-# Non-root user for security
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 USER appuser
 
 EXPOSE 4000
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget -qO- http://localhost:4000/health || exit 1
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
+  CMD node /app/healthcheck.js
 
 CMD ["node", "src/index.js"]

@@ -1,4 +1,5 @@
 const logger = require('../config/logger');
+const { metrics } = require('../config/metrics');
 const express = require('express');
 const { body, param, validationResult } = require('express-validator');
 
@@ -27,6 +28,7 @@ router.get('/', async (req, res) => {
     const cacheKey = 'items:all';
     const cached = await redis.get(cacheKey);
     if (cached) {
+      metrics.cacheHits.inc({ cache: 'items_list' });
       return res.json({ source: 'cache', items: JSON.parse(cached) });
     }
 
@@ -48,6 +50,7 @@ router.get('/:id', [param('id').isUUID()], async (req, res) => {
     const cacheKey = `items:${req.params.id}`;
     const cached = await redis.get(cacheKey);
     if (cached) {
+      metrics.cacheHits.inc({ cache: 'item_single' });
       return res.json({ source: 'cache', item: JSON.parse(cached) });
     }
 

@@ -1,0 +1,288 @@
+// ============================================================
+// EcomShop — Jenkinsfile
+// Full CI/CD pipeline triggered on every GitHub push.
+//
+// Stages:
+//   1. Checkout        — clone repo
+//   2. Unit Tests      — node:test (41 tests, no external deps)
+//   3. SAST            — custom Python scanner (15 rules)
+//   4. Dependency Scan — npm audit on backend + frontend
+//   5. Docker Build    — build both images
+//   6. Integration     — spin up stack, run DAST
+//   7. Stress (main)   — k6 smoke test against running stack
+//   8. Deploy (main)   — SSH deploy to production
+//   9. Notify          — post result to GitHub commit status
+//
+// Requirements (Jenkins plugins):
+//   Pipeline, Git, Docker Pipeline, SSH Agent,
+//   GitHub, HTML Publisher, JUnit
+// ============================================================
+
+pipeline {
+
+  agent { label 'docker' }   // requires a Jenkins agent with Docker installed
+
+  environment {
+    IMAGE_BACKEND  = "ecommerce-backend"
+    IMAGE_FRONTEND = "ecommerce-frontend"
+    COMPOSE_FILE   = "docker-compose.yml"
+    NODE_VERSION   = "20"
+  }
+
+  options {
+    timeout(time: 60, unit: 'MINUTES')
+    buildDiscarder(logRotator(numToKeepStr: '20'))
+    disableConcurrentBuilds()
+    timestamps()
+  }
+
+  triggers {
+    // Poll GitHub every 2 minutes (or use webhook — see README)
+    githubPush()
+  }
+
+  stages {
+
+    // ── 1. Checkout ──────────────────────────────────────────────────────────
+    stage('Checkout') {
+      steps {
+        checkout scm
+        script {
+          env.GIT_COMMIT_SHORT = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
+          env.GIT_BRANCH_NAME  = sh(returnStdout: true, script: 'git rev-parse --abbrev-ref HEAD').trim()
+          echo "Branch: ${env.GIT_BRANCH_NAME}  Commit: ${env.GIT_COMMIT_SHORT}"
+        }
+      }
+    }
+
+    // ── 2. Unit Tests ────────────────────────────────────────────────────────
+    stage('Unit Tests') {
+      agent {
+        docker {
+          image "node:${NODE_VERSION}-alpine"
+          reuseNode true
+        }
+      }
+      steps {
+        dir('backend') {
+          sh '''
+            node tests/create-stubs.js
+            node --test tests/*.test.js 2>&1 | tee ../test-results/unit-tests.txt
+          '''
+        }
+      }
+      post {
+        always {
+          archiveArtifacts artifacts: 'test-results/unit-tests.txt', allowEmptyArchive: true
+        }
+      }
+    }
+
+    // ── 3. SAST ──────────────────────────────────────────────────────────────
+    stage('SAST') {
+      agent {
+        docker {
+          image 'python:3.12-alpine'
+          reuseNode true
+        }
+      }
+      steps {
+        sh '''
+          mkdir -p sast-results
+          python3 sast/scanner.py --project . --output sast-results/sast-report.html
+        '''
+      }
+      post {
+        always {
+          archiveArtifacts artifacts: 'sast-results/**', allowEmptyArchive: true
+          publishHTML(target: [
+            reportName:  'SAST Report',
+            reportDir:   'sast-results',
+            reportFiles: 'sast-report.html',
+            keepAll:      true,
+            alwaysLinkToLastBuild: true,
+          ])
+        }
+        failure {
+          echo 'SAST found CRITICAL or HIGH findings — blocking build'
+        }
+      }
+    }
+
+    // ── 4. Dependency Vulnerability Scan ────────────────────────────────────
+    stage('Dependency Scan') {
+      agent {
+        docker {
+          image "node:${NODE_VERSION}-alpine"
+          reuseNode true
+        }
+      }
+      steps {
+        sh '''
+          mkdir -p audit-results
+          echo "=== Backend ===" | tee audit-results/npm-audit.txt
+          cd backend && npm ci --prefer-offline 2>/dev/null || npm install
+          npm audit --audit-level=high --json >> ../audit-results/npm-audit-backend.json || true
+          npm audit --audit-level=high | tee -a ../audit-results/npm-audit.txt || true
+          cd ..
+
+          echo "=== Frontend ===" | tee -a audit-results/npm-audit.txt
+          cd frontend && npm ci --prefer-offline 2>/dev/null || npm install
+          npm audit --audit-level=high --json >> ../audit-results/npm-audit-frontend.json || true
+          npm audit --audit-level=high | tee -a ../audit-results/npm-audit.txt || true
+        '''
+      }
+      post {
+        always {
+          archiveArtifacts artifacts: 'audit-results/**', allowEmptyArchive: true
+        }
+      }
+    }
+
+    // ── 5. Docker Build ──────────────────────────────────────────────────────
+    stage('Docker Build') {
+      steps {
+        script {
+          // Generate cert if not present
+          sh 'chmod +x nginx/generate-certs.sh && ./nginx/generate-certs.sh'
+          // Build images
+          sh """
+            docker compose build \
+              --build-arg NEXT_PUBLIC_API_URL=https://localhost/api \
+              --parallel
+          """
+        }
+      }
+    }
+
+    // ── 6. Integration — spin up stack + DAST ────────────────────────────────
+    stage('Integration & DAST') {
+      steps {
+        script {
+          // Create .env for test environment
+          sh '''
+            cat > .env << EOF
+POSTGRES_DB=ecommerce_ci
+POSTGRES_USER=ecom_user
+POSTGRES_PASSWORD=ci_test_password_temp
+REDIS_PASSWORD=ci_redis_password_temp
+JWT_SECRET=ci_jwt_secret_64chars_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+CORS_ORIGIN=https://localhost
+NEXT_PUBLIC_API_URL=https://localhost/api
+LOG_LEVEL=warn
+BRUTE_MAX_ATTEMPTS=999
+EOF
+          '''
+          // Start the stack
+          sh 'docker compose up -d'
+
+          // Wait for all services to be healthy
+          sh '''
+            echo "Waiting for stack to be healthy..."
+            MAX_WAIT=120
+            ELAPSED=0
+            until docker compose ps | grep -q "healthy.*healthy.*healthy"; do
+              if [ $ELAPSED -ge $MAX_WAIT ]; then
+                echo "ERROR: Stack did not become healthy in ${MAX_WAIT}s"
+                docker compose logs
+                exit 1
+              fi
+              sleep 5
+              ELAPSED=$((ELAPSED + 5))
+            done
+            echo "All services healthy"
+          '''
+
+          // Run DAST
+          sh '''
+            mkdir -p dast-results
+            python3 dast/dast_runner.py \
+              --base-url https://localhost \
+              --output dast-results/dast-report.html || true
+          '''
+        }
+      }
+      post {
+        always {
+          archiveArtifacts artifacts: 'dast-results/**', allowEmptyArchive: true
+          publishHTML(target: [
+            reportName:  'DAST Report',
+            reportDir:   'dast-results',
+            reportFiles: 'dast-report.html',
+            keepAll:      true,
+            alwaysLinkToLastBuild: true,
+          ])
+          sh 'docker compose logs backend > dast-results/backend.log 2>&1 || true'
+        }
+      }
+    }
+
+    // ── 7. Stress Test (smoke only in CI — full stress runs nightly) ─────────
+    stage('Stress Test — Smoke') {
+      steps {
+        sh '''
+          mkdir -p stress-results
+          docker run --rm -i \
+            --network ecommerce_public_net \
+            -e SCENARIO=smoke \
+            -e BASE_URL=https://nginx \
+            -v "$(pwd)/stress-tests:/tests" \
+            grafana/k6 run --insecure-skip-tls-verify \
+              --out json=/tests/smoke-results.json \
+              /tests/k6-tests.js \
+            2>&1 | tee stress-results/smoke.txt || true
+          cp stress-tests/smoke-results.json stress-results/ 2>/dev/null || true
+        '''
+      }
+      post {
+        always {
+          archiveArtifacts artifacts: 'stress-results/**', allowEmptyArchive: true
+        }
+      }
+    }
+
+    // ── 8. Deploy to Production (main branch only) ───────────────────────────
+    stage('Deploy') {
+      when {
+        branch 'main'
+        not { changeRequest() }
+      }
+      steps {
+        sshagent(credentials: ['deploy-ssh-key']) {
+          sh '''
+            ssh-keyscan -H $DEPLOY_HOST >> ~/.ssh/known_hosts
+
+            # Copy updated files to server
+            scp -r docker-compose.yml nginx/ waf/ \
+              $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/
+
+            # Pull and restart
+            ssh $DEPLOY_USER@$DEPLOY_HOST "
+              cd $DEPLOY_PATH
+              docker compose pull
+              docker compose up -d --no-deps --remove-orphans
+              docker image prune -f
+            "
+          '''
+        }
+      }
+    }
+
+  } // end stages
+
+  post {
+    always {
+      // Tear down test stack
+      sh 'docker compose down -v --remove-orphans 2>/dev/null || true'
+      sh 'rm -f .env 2>/dev/null || true'
+      cleanWs()
+    }
+    success {
+      echo "Pipeline PASSED — ${env.GIT_BRANCH_NAME}@${env.GIT_COMMIT_SHORT}"
+    }
+    failure {
+      echo "Pipeline FAILED — ${env.GIT_BRANCH_NAME}@${env.GIT_COMMIT_SHORT}"
+    }
+  }
+
+}
