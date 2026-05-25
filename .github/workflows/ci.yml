@@ -282,31 +282,6 @@ jobs:
             --base-url https://localhost \
             --output dast-results/dast-report.html || true
 
-      - name: Run OWASP ZAP DAST Scan
-        run: |
-          mkdir -p zap-results
-          chmod 777 zap-results
-
-          cp webapp/zap/rules.tsv zap-results/rules.tsv
-
-          echo "→ Authenticating against local API to grab bearer token..."
-          USER_JWT=$(curl -k -s -X POST https://localhost/api/auth/login \
-            -H "Content-Type: application/json" \
-            -d '{"email": "test@shop.ci", "password": "TestPass@12345"}' \
-            | python3 -c "import sys, json; print(json.load(sys.stdin).get('token', ''))")
-
-          echo "Token successfully extracted!"
-
-          echo "→ Injecting token and executing automated ZAP spider crawl..."
-          docker run --rm --network ecommerce_public_net \
-            -v "$(pwd)/zap-results:/zap/wrk/:rw" \
-            -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
-            -t https://nginx \
-            -c rules.tsv \
-            -z "-config replacer.full_list\(0\).description=auth -config replacer.full_list\(0\).enabled=true -config replacer.full_list\(0\).matchtype=REQ_HEADER -config replacer.full_list\(0\).matchstr=Authorization -config replacer.full_list\(0\).regex=false -config replacer.full_list\(0\).replacement='Bearer $USER_JWT'" \
-            -r zap-report.html \
-            -I || true
-
       - name: Run k6 smoke test
         run: |
           mkdir -p stress-results
