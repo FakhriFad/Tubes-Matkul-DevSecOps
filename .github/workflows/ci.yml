@@ -61,8 +61,22 @@ jobs:
         run: |
           if [ -f package-lock.json ]; then npm ci; else npm install; fi
           npm run lint
+  # ── 2. Secret Scan & Unit Tests ───────────────────────────────────────────
+  secret-scan:
+    name: Secret Scan — Gitleaks
+    runs-on: ubuntu-latest
+    needs: lint
 
-  # ── 2. Unit Tests ─────────────────────────────────────────────────────────
+    steps:
+        - uses: actions/checkout@v4
+        with:
+            fetch-depth: 0
+
+        - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   test:
     name: Unit Tests
     runs-on: ubuntu-latest
@@ -85,7 +99,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: unit-test-results
-          path: webapp/backend/test-results/ # 👈 Updated path
+          path: webapp/backend/test-results/
 
   # ── 3. Custom SAST ────────────────────────────────────────────────────────
   sast-custom:
@@ -181,7 +195,7 @@ jobs:
   build:
     name: Build Docker Images
     runs-on: ubuntu-latest
-    needs: [test, sast-custom, dep-audit]
+    needs: [test, sast-custom, sast-codeql, sast-semgrep, dep-audit, secret-scan]
     steps:
       - uses: actions/checkout@v4
 
