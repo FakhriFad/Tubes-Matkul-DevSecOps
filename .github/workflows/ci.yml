@@ -96,7 +96,7 @@ jobs:
       - name: Run SAST scanner
         run: |
           mkdir -p sast-results
-          python3 sast/scanner.py --project . --output sast-results/sast-report.html
+          python3 webapp/sast/scanner.py --project . --output sast-results/sast-report.html
 
       - name: Upload SAST HTML report
         uses: actions/upload-artifact@v4
