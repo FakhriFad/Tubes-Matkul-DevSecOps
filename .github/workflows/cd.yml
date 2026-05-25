@@ -71,9 +71,9 @@ jobs:
       - name: Copy files to server
         run: |
           scp -r \
-            docker-compose.yml \
+            webapp/docker-compose.yml \
             .env.production \
-            nginx/ \
+            webapp/nginx/ \
             ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}/
 
       - name: Deploy on remote server

@@ -72,13 +72,13 @@ jobs:
       # ── 2. Generate self-signed TLS cert ────────────────────────────────────
       - name: Generate TLS certificate
         run: |
-          chmod +x nginx/generate-certs.sh
-          ./nginx/generate-certs.sh
+          chmod +x webapp/nginx/generate-certs.sh
+          ./webapp/nginx/generate-certs.sh
 
       # ── 3. Start all services ────────────────────────────────────────────────
       - name: Start application stack
         run: |
-          docker compose up -d --build
+          docker compose -f webapp/docker-compose.yml up -d --build
           echo "Waiting for services to be healthy..."
 
       - name: Wait for backend health check
@@ -245,11 +245,11 @@ jobs:
       - name: Collect service logs on failure
         if: failure()
         run: |
-          echo "=== BACKEND LOGS ===" && docker compose logs --tail=100 backend
-          echo "=== NGINX LOGS ==="   && docker compose logs --tail=50  nginx
-          echo "=== FRONTEND LOGS ===" && docker compose logs --tail=50 frontend
+          echo "=== BACKEND LOGS ===" && docker compose -f webapp/docker-compose.yml logs --tail=100 backend
+          echo "=== NGINX LOGS ==="   && docker compose -f webapp/docker-compose.yml logs --tail=50  nginx
+          echo "=== FRONTEND LOGS ===" && docker compose -f webapp/docker-compose.yml logs --tail=50 frontend
 
       # ── 12. Tear down ─────────────────────────────────────────────────────────
       - name: Tear down stack
         if: always()
-        run: docker compose down -v --remove-orphans
+        run: docker compose -f webapp/docker-compose.yml down -v --remove-orphans

@@ -19,8 +19,12 @@ name: CI — Lint · Test · SAST · Build · DAST
 on:
   push:
     branches: ["**"]
+    paths:
+      - 'webapp/**'
   pull_request:
     branches: [main, develop]
+    paths:
+      - 'webapp/**'
 
 permissions:
   contents: read
@@ -44,13 +48,13 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install & lint backend
-        working-directory: backend
+        working-directory: webapp/backend
         run: |
           if [ -f package-lock.json ]; then npm ci; else npm install; fi
           npm run lint
 
       - name: Install & lint frontend
-        working-directory: frontend
+        working-directory: webapp/frontend
         run: |
           if [ -f package-lock.json ]; then npm ci; else npm install; fi
           npm run lint
@@ -68,7 +72,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Generate stubs & run tests
-        working-directory: backend
+        working-directory: webapp/backend
         run: |
           node tests/create-stubs.js
           node --test tests/*.test.js
@@ -160,13 +164,13 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Audit backend
-        working-directory: backend
+        working-directory: webapp/backend
         run: |
           if [ -f package-lock.json ]; then npm ci; else npm install; fi
           npm audit --audit-level=high
 
       - name: Audit frontend
-        working-directory: frontend
+        working-directory: webapp/frontend
         run: |
           if [ -f package-lock.json ]; then npm ci; else npm install; fi
           npm audit --audit-level=high
@@ -192,7 +196,7 @@ jobs:
       - name: Build backend image
         uses: docker/build-push-action@v5
         with:
-          context: ./backend
+          context: ./webapp/backend
           push: ${{ github.event_name != 'pull_request' }}
           tags: ghcr.io/${{ github.repository }}/backend:${{ github.sha }}
           cache-from: type=gha
@@ -201,7 +205,7 @@ jobs:
       - name: Build frontend image
         uses: docker/build-push-action@v5
         with:
-          context: ./frontend
+          context: ./webapp/frontend
           push: ${{ github.event_name != 'pull_request' }}
           tags: ghcr.io/${{ github.repository }}/frontend:${{ github.sha }}
           cache-from: type=gha
