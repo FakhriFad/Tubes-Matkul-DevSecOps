@@ -3,15 +3,15 @@
 # Runs on every push and pull request.
 #
 # Stages:
-#   lint          ESLint on backend + frontend
-#   test          41 unit tests (node:test, no external deps)
-#   sast          Custom SAST scanner (15 rules, OWASP-mapped)
-#   sast-codeql   GitHub CodeQL deep semantic analysis
-#   sast-semgrep  Semgrep OWASP rule sets
-#   dep-audit     npm audit (known CVEs in dependencies)
-#   build         Docker image build
-#   integration   Full stack up + DAST + smoke stress test
-#   image-scan    Trivy container image vulnerability scan
+#    lint          ESLint on backend + frontend
+#    test          41 unit tests (node:test, no external deps)
+#    sast          Custom SAST scanner (15 rules, OWASP-mapped)
+#    sast-codeql   GitHub CodeQL deep semantic analysis
+#    sast-semgrep  Semgrep OWASP rule sets
+#    dep-audit     npm audit (known CVEs in dependencies)
+#    build         Docker image build
+#    integration   Full stack up + DAST + smoke stress test
+#    image-scan    Trivy container image vulnerability scan
 # ============================================================
 
 name: CI — Lint · Test · SAST · Build · DAST
@@ -82,8 +82,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: unit-test-results
-          path: backend/test-results/
-          retention-days: 7
+          path: webapp/backend/test-results/ # 👈 Updated path
 
   # ── 3. Custom SAST ────────────────────────────────────────────────────────
   sast-custom:
@@ -96,7 +95,7 @@ jobs:
       - name: Run SAST scanner
         run: |
           mkdir -p sast-results
-          python3 webapp/sast/scanner.py --project . --output sast-results/sast-report.html
+          python3 webapp/sast/scanner.py --project ./webapp --output sast-results/sast-report.html # 👈 Target webapp directory
 
       - name: Upload SAST HTML report
         uses: actions/upload-artifact@v4
@@ -141,9 +140,9 @@ jobs:
             --config "p/secrets" \
             --sarif --output semgrep.sarif \
             --severity ERROR --severity WARNING \
-            --exclude "backend/node_modules" \
-            --exclude "frontend/node_modules" \
-            . || true
+            --exclude "webapp/backend/node_modules" \
+            --exclude "webapp/frontend/node_modules" \
+            webapp/ # 👈 Targets webapp folder cleanly
         env:
           SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
       - uses: github/codeql-action/upload-sarif@v3
@@ -221,7 +220,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Generate TLS certificate
-        run: chmod +x webapp/nginx/generate-certs.sh && ./nginx/generate-certs.sh
+        run: chmod +x webapp/nginx/generate-certs.sh && ./webapp/nginx/generate-certs.sh # 👈 Updated path
 
       - name: Create CI environment
         run: |
@@ -238,12 +237,12 @@ jobs:
           EOF
 
       - name: Start full stack
-        run: docker compose up -d --build
+        run: docker compose -f webapp/docker-compose.yml up -d --build # 👈 Point explicitly to file
 
       - name: Wait for healthy stack
         run: |
           for i in $(seq 1 24); do
-            HEALTHY=$(docker compose ps --format json | python3 -c "
+            HEALTHY=$(docker compose -f webapp/docker-compose.yml ps --format json | python3 -c "
           import sys, json
           data = [json.loads(l) for l in sys.stdin if l.strip()]
           print(sum(1 for s in data if s.get('Health') == 'healthy'))
@@ -267,7 +266,7 @@ jobs:
             --network ecommerce_public_net \
             -e SCENARIO=smoke \
             -e BASE_URL=https://nginx \
-            -v "$(pwd)/stress-tests:/tests" \
+            -v "$(pwd)/webapp/stress-tests:/tests" \
             grafana/k6 run --insecure-skip-tls-verify \
               /tests/k6-tests.js \
             2>&1 | tee stress-results/smoke.txt || true
