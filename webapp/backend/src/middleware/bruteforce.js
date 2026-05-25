@@ -67,13 +67,13 @@ async function recordFailure(email, ip) {
 
     const [emailCount] = await Promise.all([
       redis.incr(eKey),
-      redis.incr(iKey),
+                                           redis.incr(iKey),
     ]);
 
-    // Set/refresh TTL on every increment
+    // Use WINDOW_SECS here for the rolling tracking window expiration!
     await Promise.all([
-      redis.expire(eKey, LOCKOUT_SECS),
-      redis.expire(iKey, LOCKOUT_SECS),
+      redis.expire(eKey, WINDOW_SECS),
+                      redis.expire(iKey, WINDOW_SECS),
     ]);
 
     const remaining = MAX_ATTEMPTS - parseInt(emailCount);
