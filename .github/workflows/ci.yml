@@ -112,7 +112,7 @@ jobs:
       - name: Run SAST scanner
         run: |
           mkdir -p sast-results
-          python3 webapp/sast/scanner.py --project ./webapp --output sast-results/sast-report.html # 👈 Target webapp directory
+          python3 webapp/sast/scanner.py --project ./webapp --output sast-results/sast-report.html
 
       - name: Upload SAST HTML report
         uses: actions/upload-artifact@v4
@@ -159,7 +159,7 @@ jobs:
             --severity ERROR --severity WARNING \
             --exclude "webapp/backend/node_modules" \
             --exclude "webapp/frontend/node_modules" \
-            webapp/ # 👈 Targets webapp folder cleanly
+            webapp/
         env:
           SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
       - uses: github/codeql-action/upload-sarif@v3
@@ -241,7 +241,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Generate TLS certificate
-        run: chmod +x webapp/nginx/generate-certs.sh && ./webapp/nginx/generate-certs.sh # 👈 Updated path
+        run: chmod +x webapp/nginx/generate-certs.sh && ./webapp/nginx/generate-certs.sh
 
       - name: Create CI environment
         run: |
@@ -251,14 +251,16 @@ jobs:
           POSTGRES_PASSWORD=ci_test_pass_temp_only
           REDIS_PASSWORD=ci_redis_pass_temp_only
           JWT_SECRET=ci_jwt_secret_64chars_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+          ADMIN_EMAIL=test@shop.ci
+          ADMIN_PASSWORD=TestPass@12345
           CORS_ORIGIN=https://localhost
           NEXT_PUBLIC_API_URL=https://localhost/api
           LOG_LEVEL=warn
-          BRUTE_MAX_ATTEMPTS=999
+          BRUTE_MAX_ATTEMPTS=50
           EOF
 
       - name: Start full stack
-        run: docker compose -f webapp/docker-compose.yml up -d --build # 👈 Point explicitly to file
+        run: docker compose -f webapp/docker-compose.yml up -d --build
 
       - name: Wait for healthy stack
         run: |
@@ -279,6 +281,31 @@ jobs:
           python3 webapp/dast/dast_runner.py \
             --base-url https://localhost \
             --output dast-results/dast-report.html || true
+
+      - name: Run OWASP ZAP DAST Scan
+        run: |
+          mkdir -p zap-results
+          chmod 777 zap-results
+
+          cp webapp/zap/rules.tsv zap-results/rules.tsv
+
+          echo "→ Authenticating against local API to grab bearer token..."
+          USER_JWT=$(curl -k -s -X POST https://localhost/api/auth/login \
+            -H "Content-Type: application/json" \
+            -d '{"email": "test@shop.ci", "password": "TestPass@12345"}' \
+            | python3 -c "import sys, json; print(json.load(sys.stdin).get('token', ''))")
+
+          echo "Token successfully extracted!"
+
+          echo "→ Injecting token and executing automated ZAP spider crawl..."
+          docker run --rm --network ecommerce_public_net \
+            -v "$(pwd)/zap-results:/zap/wrk/:rw" \
+            -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+            -t https://nginx \
+            -c rules.tsv \
+            -z "-config replacer.full_list\(0\).description=auth -config replacer.full_list\(0\).enabled=true -config replacer.full_list\(0\).matchtype=REQ_HEADER -config replacer.full_list\(0\).matchstr=Authorization -config replacer.full_list\(0\).regex=false -config replacer.full_list\(0\).replacement='Bearer $USER_JWT'" \
+            -r zap-report.html \
+            -I || true
 
       - name: Run k6 smoke test
         run: |
