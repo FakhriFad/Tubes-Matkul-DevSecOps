@@ -56,7 +56,7 @@ jobs:
       - name: Install & lint frontend
         working-directory: webapp/frontend
         run: |
-          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+          if [ -f package-lock.json ]; then npm ci --legacy-peer-deps; else npm install --legacy-peer-deps; fi
           npm run lint
 
   # ── 2. Unit Tests ─────────────────────────────────────────────────────────
