@@ -1,6 +1,9 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
+
+ENV NPM_CONFIG_LEGACY_PEER_DEPS=true
+
 RUN if [ -f package-lock.json ]; then \
       npm ci; \
     else \
