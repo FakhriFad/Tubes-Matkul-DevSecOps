@@ -231,7 +231,7 @@ jobs:
 
       - name: Create CI environment
         run: |
-          cat > .env << 'EOF'
+          cat > webapp/.env << 'EOF'
           POSTGRES_DB=ecommerce_ci
           POSTGRES_USER=ecom_user
           POSTGRES_PASSWORD=ci_test_pass_temp_only
@@ -307,6 +307,10 @@ jobs:
     if: github.event_name != 'pull_request'
     steps:
       - uses: actions/checkout@v4
+
+      - name: Downcase repository name
+        run: |
+          echo "REPO_LOWER=${GITHUB_REPOSITORY,,}" >> ${GITHUB_ENV}
 
       - name: Scan backend image
         uses: aquasecurity/trivy-action@master
