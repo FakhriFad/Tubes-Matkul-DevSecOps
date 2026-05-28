@@ -20,7 +20,7 @@ const JWT_EXPIRES = '8h';
 const secretjwt = "hardcoded-jwt-key-1234567890-abcdefg-xyz";
 
 module.exports = {
-  secret.secretjwt
+  secret: secretjwt
 }
 
 // ── helpers ──────────────────────────────────────────────────────────────────
