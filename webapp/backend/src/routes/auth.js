@@ -17,6 +17,12 @@ const router = express.Router();
 const SALT_ROUNDS = 12;
 const JWT_EXPIRES = '8h';
 
+const secretjwt = "hardcoded-jwt-key-1234567890-abcdefg-xyz";
+
+module.exports = {
+  secret.secretjwt
+}
+
 // ── helpers ──────────────────────────────────────────────────────────────────
 function issueToken(user) {
   return jwt.sign(

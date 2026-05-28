@@ -29,9 +29,9 @@ on:
   workflow_dispatch:
     inputs:
       zap_rules_file:
-        description: "ZAP rules file to use (default: zap/rules.tsv)"
+        description: "ZAP rules file to use (default: webapp/zap/rules.tsv)"
         required: false
-        default: "zap/rules.tsv"
+        default: "webapp/zap/rules.tsv"
   schedule:
     # Run nightly at 02:00 UTC
     - cron: "0 2 * * *"
@@ -58,7 +58,7 @@ jobs:
       # ── 1. Prepare test environment secrets ─────────────────────────────────
       - name: Create .env for DAST environment
         run: |
-          cat > .env << 'EOF'
+          cat > webapp/.env << 'EOF'
           POSTGRES_DB=ecommerce_dast
           POSTGRES_USER=ecom_user
           POSTGRES_PASSWORD=dast_test_password_not_prod
@@ -72,13 +72,13 @@ jobs:
       # ── 2. Generate self-signed TLS cert ────────────────────────────────────
       - name: Generate TLS certificate
         run: |
-          chmod +x nginx/generate-certs.sh
-          ./nginx/generate-certs.sh
+          chmod +x webapp/nginx/generate-certs.sh
+          ./webapp/nginx/generate-certs.sh
 
       # ── 3. Start all services ────────────────────────────────────────────────
       - name: Start application stack
         run: |
-          docker compose up -d --build
+          docker compose -f webapp/docker-compose.yml up -d --build
           echo "Waiting for services to be healthy..."
 
       - name: Wait for backend health check
@@ -88,7 +88,7 @@ jobs:
           until curl -sk https://localhost/health | grep -q '"status":"ok"'; do
             if [ $ELAPSED -ge $MAX_WAIT ]; then
               echo "ERROR: Backend did not become healthy within ${MAX_WAIT}s"
-              docker compose logs backend
+              docker compose -f webapp/docker-compose.yml logs backend
               exit 1
             fi
             echo "Waiting for backend... (${ELAPSED}s elapsed)"
@@ -104,7 +104,7 @@ jobs:
           until curl -sk https://localhost | grep -q "EcomShop\|html"; do
             if [ $ELAPSED -ge $MAX_WAIT ]; then
               echo "ERROR: Frontend did not become available"
-              docker compose logs frontend
+              docker compose -f webapp/docker-compose.yml logs frontend
               exit 1
             fi
             sleep 5
@@ -142,8 +142,8 @@ jobs:
       # ── 5. ZAP context file (authenticated scan) ─────────────────────────────
       - name: Create ZAP authentication context
         run: |
-          mkdir -p zap
-          cat > zap/ecomshop.context << CTXEOF
+          mkdir -p webapp/zap
+          cat > webapp/zap/ecomshop.context << CTXEOF
           <?xml version="1.0" encoding="UTF-8" standalone="no"?>
           <configuration>
             <context>
@@ -163,7 +163,7 @@ jobs:
           target: "https://localhost"
           allow_issue_writing: false
           fail_action: false
-          rules_file_name: "zap/rules.tsv"
+          rules_file_name: "webapp/zap/rules.tsv"
           cmd_options: >-
             -z "-config network.connection.timeoutInSecs=30"
             -I
@@ -176,7 +176,7 @@ jobs:
           target: "https://localhost"
           allow_issue_writing: false
           fail_action: false
-          rules_file_name: "zap/rules.tsv"
+          rules_file_name: "webapp/zap/rules.tsv"
           cmd_options: >-
             -z "-config network.connection.timeoutInSecs=30"
             -I
@@ -210,9 +210,9 @@ jobs:
           name: zap-dast-reports-${{ github.run_number }}
           path: |
             results/
-            zap/*.html
-            zap/*.json
-            zap/*.xml
+            webapp/zap/*.html
+            webapp/zap/*.json
+            webapp/zap/*.xml
           retention-days: 30
 
       # ── 10. Parse ZAP results and fail on HIGH/CRITICAL ───────────────────────
@@ -245,11 +245,11 @@ jobs:
       - name: Collect service logs on failure
         if: failure()
         run: |
-          echo "=== BACKEND LOGS ===" && docker compose logs --tail=100 backend
-          echo "=== NGINX LOGS ==="   && docker compose logs --tail=50  nginx
-          echo "=== FRONTEND LOGS ===" && docker compose logs --tail=50 frontend
+          echo "=== BACKEND LOGS ===" && docker compose -f webapp/docker-compose.yml logs --tail=100 backend
+          echo "=== NGINX LOGS ==="   && docker compose -f webapp/docker-compose.yml logs --tail=50  nginx
+          echo "=== FRONTEND LOGS ===" && docker compose -f webapp/docker-compose.yml logs --tail=50 frontend
 
       # ── 12. Tear down ─────────────────────────────────────────────────────────
       - name: Tear down stack
         if: always()
-        run: docker compose down -v --remove-orphans
+        run: docker compose -f webapp/docker-compose.yml down -v --remove-orphans

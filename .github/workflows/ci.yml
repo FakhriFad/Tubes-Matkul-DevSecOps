@@ -4,6 +4,7 @@
 #
 # Stages:
 #    lint          ESLint on backend + frontend
+#    scan          Scan secret using gitleaks
 #    test          41 unit tests (node:test, no external deps)
 #    sast          Custom SAST scanner (15 rules, OWASP-mapped)
 #    sast-codeql   GitHub CodeQL deep semantic analysis
