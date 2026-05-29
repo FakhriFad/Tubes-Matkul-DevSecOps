@@ -167,6 +167,7 @@ jobs:
           cmd_options: >-
             -z "-config network.connection.timeoutInSecs=30"
             -I
+            -S
 
       # ── 7. ZAP Full Scan (comprehensive active attack) ───────────────────────
       - name: Run ZAP Full Active Scan
@@ -180,6 +181,7 @@ jobs:
           cmd_options: >-
             -z "-config network.connection.timeoutInSecs=30"
             -I
+            -S
 
       # ── 8. ZAP API Scan (OpenAPI / REST endpoints) ───────────────────────────
       - name: Run ZAP API Scan
@@ -199,7 +201,7 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
-          sarif_file: results/zap-baseline.sarif
+          sarif_file: zap.sarif
           category: zap-dast
         continue-on-error: true
 

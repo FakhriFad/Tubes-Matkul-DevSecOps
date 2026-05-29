@@ -23,17 +23,17 @@ Browser (HTTPS)
      ▼
 ┌─────────────┐   public_net   ┌──────────────┐
 │    Nginx    │ ─────────────▶ │   Frontend   │
-│  :80 / :443 │                │  Next.js :3000│
+│  :80 / :443 │                │ Next.js :3000│
 │  TLS term.  │                └──────────────┘
 │  Rate limit │
 │  Sec headers│   public_net   ┌──────────────┐  backend_net  ┌────────────┐
-│             │ ─────────────▶ │   Backend    │ ─────────────▶ │ PostgreSQL │
-└─────────────┘  /api/*        │  Express :4000│               │    :5432   │
-                                │               │ ─────────────▶ ├────────────┤
-                                │  Auth / RBAC  │  backend_net  │   Redis    │
-                                │  Audit Log    │               │    :6379   │
-                                │  MFA (TOTP)   │               └────────────┘
-                                └──────────────┘
+│             │ ─────────────▶ │   Backend    │ ─────────────▶│ PostgreSQL │
+└─────────────┘  /api/*        │ Express :4000│               │    :5432   │
+                               │              │ ─────────────▶├────────────┤
+                               │ Auth / RBAC  │  backend_net  │   Redis    │
+                               │ Audit Log    │               │    :6379   │
+                               │ MFA (TOTP)   │               └────────────┘
+                               └──────────────┘
 ```
 
 ### Network Isolation
@@ -136,18 +136,18 @@ audit_logs
          ┌──────────────────────────────────────────────────────┐
          │                   EcomShop System                    │
          │                                                      │
-User ───▶│  [1. Register]  ────────────────────────▶ users DB  │
+User ───▶│  [1. Register]  ────────────────────────▶ users DB   │
          │                                                      │
-User ───▶│  [2. Login]     ──── verify ──▶ users DB            │
+User ───▶│  [2. Login]     ──── verify ──▶ users DB             │
          │                 ◀── JWT + MFA check                  │
          │                                                      │
-User ───▶│  [3. Item Mgmt] ──── read/write ──▶ items DB        │
+User ───▶│  [3. Item Mgmt] ──── read/write ──▶ items DB         │
          │                 ◀── cached read via Redis            │
          │                                                      │
-User ───▶│  [4. Cart]      ──── read/write ──▶ carts DB        │
+User ───▶│  [4. Cart]      ──── read/write ──▶ carts DB         │
          │                 ──── stock deduct ──▶ items DB       │
          │                                                      │
-         │  All 4 processes ─────────────────▶ audit_logs DB   │
+         │  All 4 processes ─────────────────▶ audit_logs DB    │
          └──────────────────────────────────────────────────────┘
 ```
 
