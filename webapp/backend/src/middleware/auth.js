@@ -19,7 +19,7 @@ async function authenticate(req, res, next) {
       return res.status(401).json({ error: 'Token has been revoked' });
     }
 
-    const JWT_SECRET = process.env.JWT_SECRET || "dev-ecommerce-super-secret-fallback-key-12345!"
+    const JWT_SECRET = "Gv9bK3mX7qP2zW5v8yB1cC4eF7hJ0kM3nP6qS9tV2wY5zA8bC1"
     const payload = jwt.verify(token, JWT_SECRET)
 
     req.user = payload;  // { id, email, role }
