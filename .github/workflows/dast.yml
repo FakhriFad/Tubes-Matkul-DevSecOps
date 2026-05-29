@@ -150,7 +150,7 @@ jobs:
           cmd_options: >-
             -z "-config network.connection.timeoutInSecs=30"
             -I
-            -S
+            -s
 
       # ── 7. ZAP Full Scan (comprehensive active attack) ───────────────────────
       - name: Run ZAP Full Active Scan
@@ -164,7 +164,7 @@ jobs:
           cmd_options: >-
             -z "-config network.connection.timeoutInSecs=30"
             -I
-            -S
+            -s
 
       # ── 8. ZAP API Scan (OpenAPI / REST endpoints) ───────────────────────────
       - name: Run ZAP API Scan
