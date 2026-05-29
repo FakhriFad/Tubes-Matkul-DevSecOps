@@ -19,9 +19,8 @@ async function authenticate(req, res, next) {
       return res.status(401).json({ error: 'Token has been revoked' });
     }
 
-    const JWT_SECRET = "Gv9bK3mX7qP2zW5v8yB1cC4eF7hJ0kM3nP6qS9tV2wY5zA8bC1"
-    const payload = jwt.verify(token, JWT_SECRET)
-
+    // Pin algorithm explicitly — prevents algorithm confusion / 'none' alg attacks (CWE-327)
+    const payload = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] }); 
     req.user = payload;  // { id, email, role }
     req.token = token;
     next();

@@ -115,12 +115,24 @@ router.post(
         if (!totp) {
           return res.status(200).json({ mfa_required: true, message: 'Provide TOTP code' });
         }
+
         const valid = authenticator.verify({ token: totp, secret: user.mfa_secret });
+
         if (!valid) {
           metrics.loginAttempts.inc({ result: 'mfa_failure' });
           await writeAuditLog({ userId: user.id, action: 'LOGIN_MFA_FAILED', entity: 'users', entityId: user.id, req });
           return res.status(401).json({ error: 'Invalid MFA code' });
         }
+
+        const token = issueToken(user);
+        metrics.loginAttempts.inc({ result: 'success' });
+        await recordSuccess(email, req.ip);
+        await writeAuditLog({ userId: user.id, action: 'LOGIN', entity: 'users', entityId: user.id, req });
+	
+        return res.json({
+          token,
+          user: { id: user.id, email: user.email, full_name: user.full_name, role: user.role, mfa_enabled: true },
+        });
       }
 
       const token = issueToken(user);
@@ -129,7 +141,7 @@ router.post(
       await writeAuditLog({ userId: user.id, action: 'LOGIN', entity: 'users', entityId: user.id, req });
 
       return res.json({
-        token,
+	token,
         user: { id: user.id, email: user.email, full_name: user.full_name, role: user.role, mfa_enabled: user.mfa_enabled },
       });
     } catch (err) {
