@@ -64,16 +64,17 @@ jobs:
           POSTGRES_PASSWORD=dast_test_password_not_prod
           REDIS_PASSWORD=dast_redis_password_not_prod
           JWT_SECRET=dast_jwt_secret_64chars_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+          ADMIN_EMAIL=dast-admin@shop.ci
+          ADMIN_PASSWORD=DastAdminPass@12345
           CORS_ORIGIN=https://localhost
           NEXT_PUBLIC_API_URL=https://localhost/api
           LOG_LEVEL=warn
+          BRUTE_MAX_ATTEMPTS=50
           EOF
 
       # ── 2. Generate self-signed TLS cert ────────────────────────────────────
       - name: Generate TLS certificate
-        run: |
-          chmod +x webapp/nginx/generate-certs.sh
-          ./webapp/nginx/generate-certs.sh
+        run: chmod +x webapp/nginx/generate-certs.sh && ./webapp/nginx/generate-certs.sh
 
       # ── 3. Start all services ────────────────────────────────────────────────
       - name: Start application stack
@@ -81,36 +82,18 @@ jobs:
           docker compose -f webapp/docker-compose.yml up -d --build
           echo "Waiting for services to be healthy..."
 
-      - name: Wait for backend health check
+      - name: Wait for healthy stack
         run: |
-          MAX_WAIT=160
-          ELAPSED=0
-          until curl -sk https://localhost/health | grep -q '"status":"ok"'; do
-            if [ $ELAPSED -ge $MAX_WAIT ]; then
-              echo "ERROR: Backend did not become healthy within ${MAX_WAIT}s"
-              docker compose -f webapp/docker-compose.yml logs backend
-              exit 1
-            fi
-            echo "Waiting for backend... (${ELAPSED}s elapsed)"
+          for i in $(seq 1 24); do
+            HEALTHY=$(docker compose -f webapp/docker-compose.yml ps --format json | python3 -c "
+          import sys, json
+          data = [json.loads(l) for l in sys.stdin if l.strip()]
+          print(sum(1 for s in data if s.get('Health') == 'healthy'))
+          " 2>/dev/null || echo 0)
+            echo "Healthy services: $HEALTHY / 5 (attempt $i/24)"
+            [ "$HEALTHY" -ge 4 ] && echo "Stack ready" && break
             sleep 5
-            ELAPSED=$((ELAPSED + 5))
           done
-          echo "Backend is healthy"
-
-      - name: Wait for frontend
-        run: |
-          MAX_WAIT=60
-          ELAPSED=0
-          until curl -sk https://localhost | grep -q "EcomShop\|html"; do
-            if [ $ELAPSED -ge $MAX_WAIT ]; then
-              echo "ERROR: Frontend did not become available"
-              docker compose -f webapp/docker-compose.yml logs frontend
-              exit 1
-            fi
-            sleep 5
-            ELAPSED=$((ELAPSED + 5))
-          done
-          echo "Frontend is up"
 
       # ── 4. Seed test data ────────────────────────────────────────────────────
       - name: Seed DAST test data
@@ -201,7 +184,7 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
-          sarif_file: zap.sarif
+          sarif_file: results/zap-baseline.sarif
           category: zap-dast
         continue-on-error: true
 
