@@ -94,8 +94,8 @@ jobs:
       # ── 4. Seed test data ────────────────────────────────────────────────────
       - name: Seed DAST test data
         run: |
-          # Register a test customer account via internal loopback network
-          docker compose -f webapp/docker-compose.yml exec -T backend curl -s -X POST http://localhost:5000/api/auth/register \
+          # Register a test customer account via the public Nginx gateway proxy
+          curl -sk -X POST https://localhost/api/auth/register \
             -H "Content-Type: application/json" \
             -d '{"email":"dast-test@example.com","password":"DastTest@123","full_name":"DAST Tester"}' \
             > /tmp/register-response.json || true
@@ -104,8 +104,8 @@ jobs:
           cat /tmp/register-response.json
           echo ""
 
-          # Login to get a token for authenticated scanning
-          LOGIN_RESP=$(docker compose -f webapp/docker-compose.yml exec -T backend curl -s -X POST http://localhost:5000/api/auth/login \
+          # Login via public gateway to harvest the active JWT session profile token
+          LOGIN_RESP=$(curl -sk -X POST https://localhost/api/auth/login \
             -H "Content-Type: application/json" \
             -d '{"email":"dast-test@example.com","password":"DastTest@123"}')
 
@@ -118,7 +118,6 @@ jobs:
             echo "DAST_TOKEN=$TOKEN" >> $GITHUB_ENV
             echo "Got auth token for authenticated scan"
           fi
-
       # ── 5. ZAP context file (authenticated scan) ─────────────────────────────
       - name: Create ZAP authentication context
         run: |
