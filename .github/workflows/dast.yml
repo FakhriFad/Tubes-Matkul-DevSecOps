@@ -23,7 +23,7 @@ name: DAST — OWASP ZAP
 
 on:
   workflow_run:
-    workflows: ["CI — Lint · Test · SAST · Build"]
+    workflows: ["CI — Lint · Test · SAST · Build · DAST"]
     branches: [main, develop]
     types: [completed]
   workflow_dispatch:
@@ -32,9 +32,6 @@ on:
         description: "ZAP rules file to use (default: webapp/zap/rules.tsv)"
         required: false
         default: "webapp/zap/rules.tsv"
-  schedule:
-    # Run nightly at 02:00 UTC
-    - cron: "0 2 * * *"
 
 permissions:
   contents: read
@@ -49,7 +46,6 @@ jobs:
     # Only run DAST if the triggering CI workflow succeeded
     if: >
       github.event_name == 'workflow_dispatch' ||
-      github.event_name == 'schedule' ||
       github.event.workflow_run.conclusion == 'success'
 
     steps:
@@ -108,12 +104,12 @@ jobs:
           cat /tmp/register-response.json
 
           # Login to get a token for authenticated scanning
-          LOGIN_RESP=$(curl -sk -X POST https://localhost/api/auth/login \
+          LOGIN_RESP=$(docker compose -f webapp/docker-compose.yml exec -T backend curl -s -X POST https://localhost/api/auth/login \
             -H "Content-Type: application/json" \
             -d '{"email":"dast-test@example.com","password":"DastTest@123"}')
 
-          echo "$LOGIN_RESP" | tee /tmp/login-response.json
-          TOKEN=$(echo "$LOGIN_RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('token',''))")
+          echo "$LOGIN_RESP" > /tmp/login-response.json
+          TOKEN=$(echo "$LOGIN_RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('token',''))" 2>/dev/null || echo "")
 
           if [ -z "$TOKEN" ]; then
             echo "WARNING: Could not obtain auth token — DAST will run unauthenticated only"
@@ -184,7 +180,7 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
-          sarif_file: results/zap-baseline.sarif
+          sarif_file: zap.sarif
           category: zap-dast
         continue-on-error: true
 
@@ -194,21 +190,21 @@ jobs:
         with:
           name: zap-dast-reports-${{ github.run_number }}
           path: |
-            results/
-            webapp/zap/*.html
-            webapp/zap/*.json
-            webapp/zap/*.xml
+            zep.sarif
+            report_html.html
+            report_json.json
+            report_md.md
           retention-days: 30
 
       # ── 10. Parse ZAP results and fail on HIGH/CRITICAL ───────────────────────
       - name: Evaluate ZAP results
         if: always()
         run: |
-          if [ -f "results/zap-baseline.json" ]; then
+          if [ -f "report_json.json" ]; then
             HIGH=$(python3 -c "
           import json, sys
           try:
-              data = json.load(open('results/zap-baseline.json'))
+              data = json.load(open('report_json.json'))
               sites = data.get('site', [])
               highs = sum(
                   len([a for a in s.get('alerts', []) if a.get('riskcode') in ['3','2']])
