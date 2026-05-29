@@ -75,6 +75,8 @@ jobs:
 
       - name: Run Gitleaks
         uses: gitleaks/gitleaks-action@v2
+        with:
+          args: --commit=latest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
