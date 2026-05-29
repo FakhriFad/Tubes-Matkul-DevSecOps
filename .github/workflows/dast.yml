@@ -94,17 +94,18 @@ jobs:
       # ── 4. Seed test data ────────────────────────────────────────────────────
       - name: Seed DAST test data
         run: |
-          # Register a test customer account for authenticated scans
-          curl -sk -X POST https://localhost/api/auth/register \
+          # Register a test customer account via internal loopback network
+          docker compose -f webapp/docker-compose.yml exec -T backend curl -s -X POST http://localhost:5000/api/auth/register \
             -H "Content-Type: application/json" \
             -d '{"email":"dast-test@example.com","password":"DastTest@123","full_name":"DAST Tester"}' \
-            | tee /tmp/register-response.json
+            > /tmp/register-response.json || true
 
           echo "Register response:"
           cat /tmp/register-response.json
+          echo ""
 
           # Login to get a token for authenticated scanning
-          LOGIN_RESP=$(docker compose -f webapp/docker-compose.yml exec -T backend curl -s -X POST https://localhost/api/auth/login \
+          LOGIN_RESP=$(docker compose -f webapp/docker-compose.yml exec -T backend curl -s -X POST http://localhost:5000/api/auth/login \
             -H "Content-Type: application/json" \
             -d '{"email":"dast-test@example.com","password":"DastTest@123"}')
 
