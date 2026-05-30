@@ -167,6 +167,21 @@ jobs:
           
           if [ -f "report.sarif" ]; then cp report.sarif zap.sarif; fi
 
+      - name: Convert ZAP JSON report to SARIF format
+        if: always()
+        run: |
+          if [ -f "report_json.json" ]; then
+            echo "Converting report_json.json to SARIF format..."
+            # Run the official standalone ZAP SARIF converter via Docker
+            docker run --rm -v ${{ github.workspace }}:/zap/wrk/:rw \
+              owasp/zap-mg-report-converter -cmd json2sarif \
+              -dast true \
+              -i /zap/wrk/report_json.json \
+              -o /zap/wrk/zap.sarif
+          else
+            echo "WARNING: report_json.json was not found, skipping SARIF compilation."
+          fi
+
       # ── 8. ZAP API Scan (OpenAPI / REST endpoints) ───────────────────────────
       - name: Run ZAP API Scan
         continue-on-error: true
