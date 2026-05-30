@@ -135,52 +135,48 @@ jobs:
           CTXEOF
 
       - name: Fix workspace permissions for ZAP container
-        run: |
-          chmod -R 777 ${{ github.workspace }}
+        run: chmod -R 777 ${{ github.workspace }}
 
       # ── 6. ZAP Baseline Scan (fast, passive + active) ────────────────────────
       - name: Run ZAP Baseline Scan
-        uses: zaproxy/action-baseline@v0.12.0
         continue-on-error: true
-        with:
-          target: "https://localhost"
-          allow_issue_writing: false
-          fail_action: false
-          artifact_export: false
-          rules_file_name: "webapp/zap/rules.tsv"
-          cmd_options: >-
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/zap/wrk/:rw --network=host \
+            ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+            -t https://localhost \
+            -J report_json.json \
+            -w report_md.md \
+            -r report_html.html \
+            -I -s \
+            -c webapp/zap/rules.tsv \
             -z "-config network.connection.timeoutInSecs=30"
-            -I
-            -s
 
       # ── 7. ZAP Full Scan (comprehensive active attack) ───────────────────────
       - name: Run ZAP Full Active Scan
-        uses: zaproxy/action-full-scan@v0.10.0
         continue-on-error: true
-        with:
-          target: "https://localhost"
-          allow_issue_writing: false
-          fail_action: false
-          artifact_export: false
-          rules_file_name: "webapp/zap/rules.tsv"
-          cmd_options: >-
-            -z "-config network.connection.timeoutInSecs=30"
-            -I
-            -s
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/zap/wrk/:rw --network=host \
+            ghcr.io/zaproxy/zaproxy:stable zap-full-scan.py \
+            -t https://localhost \
+            -J report_json.json \
+            -w report_md.md \
+            -r report_html.html \
+            -I -s \
+            -c webapp/zap/rules.tsv \
+            -z "-config network.connection.timeoutInSecs=30 -config format.sarif=true"
+          
+          if [ -f "report.sarif" ]; then cp report.sarif zap.sarif; fi
 
       # ── 8. ZAP API Scan (OpenAPI / REST endpoints) ───────────────────────────
       - name: Run ZAP API Scan
-        uses: zaproxy/action-api-scan@v0.9.0
         continue-on-error: true
-        with:
-          target: "https://localhost/api"
-          format: openapi
-          allow_issue_writing: false
-          fail_action: false
-          artifact_export: false
-          cmd_options: >-
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/zap/wrk/:rw --network=host \
+            ghcr.io/zaproxy/zaproxy:stable zap-api-scan.py \
+            -t https://localhost/api \
+            -f openapi \
+            -I \
             -z "-config network.connection.timeoutInSecs=30"
-            -I
 
       # ── 9. Upload ZAP results ─────────────────────────────────────────────────
       - name: Upload ZAP SARIF to GitHub Security tab
@@ -197,7 +193,7 @@ jobs:
         with:
           name: zap-dast-reports-${{ github.run_number }}
           path: |
-            zep.sarif
+            zap.sarif
             report_html.html
             report_json.json
             report_md.md
