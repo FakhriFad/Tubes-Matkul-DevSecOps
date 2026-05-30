@@ -161,25 +161,63 @@ jobs:
             -J report_json.json \
             -w report_md.md \
             -r report_html.html \
+            -x report_xml.xml \
             -I -s \
             -c webapp/zap/rules.tsv \
-            -z "-config network.connection.timeoutInSecs=30 -config format.sarif=true"
-          
-          if [ -f "report.sarif" ]; then cp report.sarif zap.sarif; fi
+            -z "-config network.connection.timeoutInSecs=30"
 
-      - name: Convert ZAP JSON report to SARIF format
+      # ── 7.5 Convert ZAP XML to GitHub SARIF Format ───────────────────────────
+      - name: Convert ZAP XML report to SARIF format
         if: always()
         run: |
-          if [ -f "report_json.json" ]; then
-            echo "Converting report_json.json to SARIF format..."
-            # Run the official standalone ZAP SARIF converter via Docker
-            docker run --rm -v ${{ github.workspace }}:/zap/wrk/:rw \
-              owasp/zap-mg-report-converter -cmd json2sarif \
-              -dast true \
-              -i /zap/wrk/report_json.json \
-              -o /zap/wrk/zap.sarif
+          if [ -f "report_xml.xml" ]; then
+            echo "Compiling SARIF profile from DAST metrics..."
+            npm install xml2js
+            node -e "
+            const fs = require('fs');
+            const xml2js = require('xml2js');
+            const parser = new xml2js.Parser();
+            
+            fs.readFile('report_xml.xml', (err, data) => {
+              if (err) { console.error(err); process.exit(1); }
+              parser.parseString(data, (err, result) => {
+                if (err) { console.error(err); process.exit(1); }
+                
+                const sarif = {
+                  \$schema: 'https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemes/sarif-schema-2.1.0.json',
+                  version: '2.1.0',
+                  runs: [{
+                    tool: { driver: { name: 'OWASP ZAP', version: 'Stable' } },
+                    results: []
+                  }]
+                };
+                
+                const site = result.OWASPZAPReport.site;
+                if (site) {
+                  site.forEach(s => {
+                    if (s.alerts && s.alerts[0] && s.alerts[0].alertitem) {
+                      s.alerts[0].alertitem.forEach(item => {
+                        sarif.runs[0].results.push({
+                          ruleId: item.pluginid ? item.pluginid[0] : 'zap-alert',
+                          message: { text: item.alert[0] + ' - ' + (item.desc ? item.desc[0].replace(/<[^>]*>/g, '') : '') },
+                          locations: [{
+                            physicalLocation: {
+                              artifactLocation: { uri: item.uri ? item.uri[0] : 'https://localhost' }
+                            }
+                          }]
+                        });
+                      });
+                    }
+                  });
+                }
+                fs.writeFileSync('zap.sarif', JSON.stringify(sarif, null, 2));
+                console.log('SARIF file written successfully to zap.sarif');
+              });
+            });
+            "
           else
-            echo "WARNING: report_json.json was not found, skipping SARIF compilation."
+            echo "WARNING: report_xml.xml not found. Generating minimal placeholder SARIF."
+            echo '{"$schema":"https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemes/sarif-schema-2.1.0.json","version":"2.1.0","runs":[{"tool":{"driver":{"name":"OWASP ZAP","version":"Stable"}},"results":[]}]}' > zap.sarif
           fi
 
       # ── 8. ZAP API Scan (OpenAPI / REST endpoints) ───────────────────────────
