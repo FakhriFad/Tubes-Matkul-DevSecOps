@@ -197,14 +197,24 @@ jobs:
                   site.forEach(s => {
                     if (s.alerts && s.alerts[0] && s.alerts[0].alertitem) {
                       s.alerts[0].alertitem.forEach(item => {
-                        // FIX: Convert web URL to a relative repository file path scheme to satisfy GitHub's backend
                         let rawUri = item.uri ? item.uri[0] : 'webapp';
                         let cleanUri = rawUri.replace(/^https?:\/\/[^\/]+\/?/, '');
                         if (!cleanUri || cleanUri === '') { cleanUri = 'webapp/README.md'; }
                         else { cleanUri = 'webapp/' + cleanUri; }
 
+                        // FIX: Extract ZAP risk code and map to GitHub native alert level
+                        // ZAP Risk Codes: 3 = High, 2 = Medium, 1 = Low, 0 = Info
+                        const riskCode = item.riskcode ? item.riskcode[0] : '1';
+                        let githubLevel = 'warning';
+                        if (riskCode === '3' || riskCode === '2') {
+                          githubLevel = 'error'; // <── Maps to High/Critical in GitHub Security Tab
+                        } else if (riskCode === '0') {
+                          githubLevel = 'note';
+                        }
+
                         sarif.runs[0].results.push({
                           ruleId: item.pluginid ? item.pluginid[0] : 'zap-alert',
+                          level: githubLevel, // <── Tells GitHub's UI how to render the severity badge
                           message: { text: item.alert[0] + ' - ' + (item.desc ? item.desc[0].replace(/<[^>]*>/g, '') : '') },
                           locations: [{
                             physicalLocation: {
