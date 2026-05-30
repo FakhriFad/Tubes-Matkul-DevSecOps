@@ -256,4 +256,14 @@ router.get('/me', authenticate, async (req, res) => {
   }
 });
 
+router.get('/debug-echo', (req, res) => {
+  const { debug_msg } = req.query;
+  
+  // Explicitly setting an HTML context triggers ZAP's XSS payload injection engines
+  res.setHeader('Content-Type', 'text/html');
+  
+  // HIGH RISK: Direct unescaped string interpolation
+  res.send(`<html><body><div id="debug">System debug trace: ${debug_msg || 'Empty payload'}</div></body></html>`);
+});
+
 module.exports = router;
