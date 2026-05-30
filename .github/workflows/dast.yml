@@ -134,6 +134,10 @@ jobs:
           </configuration>
           CTXEOF
 
+      - name: Fix workspace permissions for ZAP container
+        run: |
+          chmod -R 777 ${{ github.workspace }}
+
       # ── 6. ZAP Baseline Scan (fast, passive + active) ────────────────────────
       - name: Run ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.12.0
@@ -142,6 +146,7 @@ jobs:
           target: "https://localhost"
           allow_issue_writing: false
           fail_action: false
+          artifact_export: false
           rules_file_name: "webapp/zap/rules.tsv"
           cmd_options: >-
             -z "-config network.connection.timeoutInSecs=30"
@@ -156,6 +161,7 @@ jobs:
           target: "https://localhost"
           allow_issue_writing: false
           fail_action: false
+          artifact_export: false
           rules_file_name: "webapp/zap/rules.tsv"
           cmd_options: >-
             -z "-config network.connection.timeoutInSecs=30"
@@ -171,6 +177,7 @@ jobs:
           format: openapi
           allow_issue_writing: false
           fail_action: false
+          artifact_export: false
           cmd_options: >-
             -z "-config network.connection.timeoutInSecs=30"
             -I
