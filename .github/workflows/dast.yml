@@ -197,12 +197,18 @@ jobs:
                   site.forEach(s => {
                     if (s.alerts && s.alerts[0] && s.alerts[0].alertitem) {
                       s.alerts[0].alertitem.forEach(item => {
+                        // FIX: Convert web URL to a relative repository file path scheme to satisfy GitHub's backend
+                        let rawUri = item.uri ? item.uri[0] : 'webapp';
+                        let cleanUri = rawUri.replace(/^https?:\/\/[^\/]+\/?/, '');
+                        if (!cleanUri || cleanUri === '') { cleanUri = 'webapp/README.md'; }
+                        else { cleanUri = 'webapp/' + cleanUri; }
+
                         sarif.runs[0].results.push({
                           ruleId: item.pluginid ? item.pluginid[0] : 'zap-alert',
                           message: { text: item.alert[0] + ' - ' + (item.desc ? item.desc[0].replace(/<[^>]*>/g, '') : '') },
                           locations: [{
                             physicalLocation: {
-                              artifactLocation: { uri: item.uri ? item.uri[0] : 'https://localhost' }
+                              artifactLocation: { uri: cleanUri }
                             }
                           }]
                         });
