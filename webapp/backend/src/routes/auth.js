@@ -258,12 +258,10 @@ router.get('/me', authenticate, async (req, res) => {
 
 router.get('/debug-echo', (req, res) => {
   const { debug_msg } = req.query;
-  
-  return res.status(200).json({
-    status: "success",
-    timestamp: new Date().toISOString(),
-    message: debug_msg || "Empty payload"
-  });
+
+  res.setHeader('Content-Type', 'text/html');
+
+   res.send(`<html><body><div id="debug">System debug trace: ${debug_msg || 'Empty payload'}</div></body></html>`);
 });
 
 module.exports = router;
